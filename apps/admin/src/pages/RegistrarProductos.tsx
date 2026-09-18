@@ -469,7 +469,9 @@ function FormularioUnidades({
       agregarUnidades({
         modelo_id: modelo.id,
         cantidad: Number(cantidad),
-        talla: talla?.trim() ? talla.trim() : null,
+        // Una categoría ajustable nunca guarda talla, aunque hubiera quedado un
+        // valor viejo en el formulario al cambiar de tipo.
+        talla: info.usaTalla && talla?.trim() ? talla.trim() : null,
         lote_id: loteId || null,
         costo_unitario_mxn: costo ? Number(costo) : null,
         linea_id: linea?.id ?? null,
@@ -496,11 +498,8 @@ function FormularioUnidades({
       <h3 style={{ marginBottom: 10 }}>Piezas de este pedido</h3>
 
       <div className="rejilla">
-        <Campo
-          etiqueta="Talla"
-          ayuda={info.usaTalla ? undefined : 'Esta categoría normalmente es ajustable.'}
-        >
-          <SelectorTalla valor={talla} alCambiar={setTalla} />
+        <Campo etiqueta="Talla">
+          <SelectorTalla categoria={modelo.categoria} valor={talla} alCambiar={setTalla} />
         </Campo>
 
         <Campo etiqueta="Cantidad" ayuda="Una fila por gorra física, cada una con su propio código.">

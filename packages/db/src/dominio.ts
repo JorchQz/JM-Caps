@@ -6,72 +6,6 @@ export type EstadoLote = Enums<'estado_lote'>
 export type MetodoPago = Enums<'metodo_pago'>
 export type CanalVenta = Enums<'canal_venta'>
 
-type InfoCategoria = {
-  codigo: Categoria
-  etiqueta: string
-  /** Precio de lista sugerido. El alta de modelo lo precarga, pero se puede cambiar. */
-  precioSugerido: number
-  /** Si es false, la categoría es ajustable y las unidades se dan de alta sin talla. */
-  usaTalla: boolean
-  /** Talla que trae precargada el alta. Null en las categorías ajustables. */
-  tallaSugerida: string | null
-  /** Categorías pausadas: se siguen mostrando pero no se sugieren para compra nueva. */
-  pausada: boolean
-}
-
-export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
-  AA: {
-    codigo: 'AA',
-    etiqueta: 'AA - estilo New Era fitted, cerrada con talla',
-    precioSugerido: 419,
-    usaTalla: true,
-    tallaSugerida: '7 1/4',
-    pausada: false,
-  },
-  AAS: {
-    codigo: 'AAS',
-    etiqueta: 'AAS - estilo New Era snapback, ajustable con broche',
-    precioSugerido: 419,
-    usaTalla: false,
-    tallaSugerida: null,
-    pausada: false,
-  },
-  UU: {
-    codigo: 'UU',
-    etiqueta: 'UU - calidad 1:1, fitted con talla',
-    precioSugerido: 699,
-    usaTalla: true,
-    tallaSugerida: '7 1/4',
-    pausada: true,
-  },
-  UUS: {
-    codigo: 'UUS',
-    etiqueta: 'UUS - calidad 1:1, snapback ajustable',
-    precioSugerido: 699,
-    usaTalla: false,
-    tallaSugerida: null,
-    pausada: true,
-  },
-  K: {
-    codigo: 'K',
-    etiqueta: 'K - niños, con talla',
-    precioSugerido: 399,
-    usaTalla: true,
-    tallaSugerida: '6 1/2',
-    pausada: false,
-  },
-  DH: {
-    codigo: 'DH',
-    etiqueta: 'DH - streetwear, ajustable',
-    precioSugerido: 799,
-    usaTalla: false,
-    tallaSugerida: null,
-    pausada: false,
-  },
-}
-
-export const CATEGORIAS_LISTA: InfoCategoria[] = Object.values(CATEGORIAS)
-
 /**
  * Tallas fitted de adulto, de 7 a 8 en octavos. Se listan todas aunque el
  * proveedor no siempre tenga el rango completo: sobra una opción de más, falta
@@ -105,6 +39,80 @@ export const TALLAS_NINO = [
 export const TALLAS_CONOCIDAS: readonly string[] = [
   ...new Set<string>([...TALLAS_FITTED, ...TALLAS_NINO]),
 ]
+
+type InfoCategoria = {
+  codigo: Categoria
+  etiqueta: string
+  /** Precio de lista sugerido. El alta de modelo lo precarga, pero se puede cambiar. */
+  precioSugerido: number
+  /** Si es false, la categoría es ajustable y las unidades se dan de alta sin talla. */
+  usaTalla: boolean
+  /** Tallas que ofrece esta categoría. Vacío en las ajustables. */
+  tallas: readonly string[]
+  /** Talla que trae precargada el alta. Null en las categorías ajustables. */
+  tallaSugerida: string | null
+  /** Categorías pausadas: se siguen mostrando pero no se sugieren para compra nueva. */
+  pausada: boolean
+}
+
+export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
+  AA: {
+    codigo: 'AA',
+    etiqueta: 'AA - estilo New Era fitted, cerrada con talla',
+    precioSugerido: 419,
+    usaTalla: true,
+    tallas: TALLAS_FITTED,
+    tallaSugerida: '7 1/4',
+    pausada: false,
+  },
+  AAS: {
+    codigo: 'AAS',
+    etiqueta: 'AAS - estilo New Era snapback, ajustable con broche',
+    precioSugerido: 419,
+    usaTalla: false,
+    tallas: [],
+    tallaSugerida: null,
+    pausada: false,
+  },
+  UU: {
+    codigo: 'UU',
+    etiqueta: 'UU - calidad 1:1, fitted con talla',
+    precioSugerido: 699,
+    usaTalla: true,
+    tallas: TALLAS_FITTED,
+    tallaSugerida: '7 1/4',
+    pausada: true,
+  },
+  UUS: {
+    codigo: 'UUS',
+    etiqueta: 'UUS - calidad 1:1, snapback ajustable',
+    precioSugerido: 699,
+    usaTalla: false,
+    tallas: [],
+    tallaSugerida: null,
+    pausada: true,
+  },
+  K: {
+    codigo: 'K',
+    etiqueta: 'K - niños, con talla',
+    precioSugerido: 399,
+    usaTalla: true,
+    tallas: TALLAS_NINO,
+    tallaSugerida: '6 1/2',
+    pausada: false,
+  },
+  DH: {
+    codigo: 'DH',
+    etiqueta: 'DH - streetwear, ajustable',
+    precioSugerido: 799,
+    usaTalla: false,
+    tallas: [],
+    tallaSugerida: null,
+    pausada: false,
+  },
+}
+
+export const CATEGORIAS_LISTA: InfoCategoria[] = Object.values(CATEGORIAS)
 
 export const ESTADOS_UNIDAD: Record<EstadoUnidad, string> = {
   pedido: 'Pedida',

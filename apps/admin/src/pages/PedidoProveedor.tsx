@@ -816,7 +816,9 @@ function NuevaLinea({ loteId, alAgregar }: { loteId: string; alAgregar: () => vo
       agregarLinea({
         lote_id: loteId,
         link_yupoo: link,
-        talla: talla?.trim() ? talla.trim() : null,
+        // Una categoría ajustable nunca guarda talla, aunque hubiera quedado un
+        // valor viejo en el formulario al cambiar de tipo.
+        talla: categoria && !CATEGORIAS[categoria].usaTalla ? null : talla?.trim() || null,
         cantidad: Number(cantidad),
         categoria: categoria || null,
         precio_usd_unitario: precio ? Number(precio) : null,
@@ -865,7 +867,13 @@ function NuevaLinea({ loteId, alAgregar }: { loteId: string; alAgregar: () => vo
           >
             <select
               value={categoria}
-              onChange={(evento) => setCategoria(evento.target.value as Categoria | '')}
+              onChange={(evento) => {
+                const elegida = evento.target.value as Categoria | ''
+                setCategoria(elegida)
+                // La talla que había puede no existir en el tipo nuevo: una 7 1/4
+                // no es talla de niño. Se reinicia a la sugerida de la categoría.
+                setTalla(elegida ? CATEGORIAS[elegida].tallaSugerida : null)
+              }}
             >
               <option value="">Tomar del catálogo si ya existe</option>
               {Object.values(CATEGORIAS).map((info) => (
@@ -878,7 +886,7 @@ function NuevaLinea({ loteId, alAgregar }: { loteId: string; alAgregar: () => vo
           </Campo>
 
           <Campo etiqueta="Talla">
-            <SelectorTalla valor={talla} alCambiar={setTalla} />
+            <SelectorTalla categoria={categoria || null} valor={talla} alCambiar={setTalla} />
           </Campo>
 
           <Campo etiqueta="Piezas">

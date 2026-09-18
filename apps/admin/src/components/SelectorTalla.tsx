@@ -1,27 +1,48 @@
 import { useState } from 'react'
-import { TALLAS_CONOCIDAS, TALLAS_FITTED, TALLAS_NINO } from '@jm-caps/db'
+import { CATEGORIAS, TALLAS_FITTED, TALLAS_NINO, type Categoria } from '@jm-caps/db'
 
 const OTRA = '__otra__'
-const AJUSTABLE = '__ajustable__'
+const SIN_TALLA = '__ninguna__'
 
 /**
- * Selector de talla para todo el panel. Null significa ajustable (sin talla).
- * Ofrece las dos escalas porque la categoría sugiere pero no obliga: el
- * proveedor a veces manda una pieza de niño dentro de un pedido de adulto. La
- * opción de escribirla a mano existe para cuando el proveedor usa otra escala,
- * como centímetros, y no dejar el alta trabada por eso.
+ * Selector de talla. Null significa sin talla (pieza ajustable).
+ *
+ * Lo que se puede elegir depende del tipo de gorra: una AA solo ofrece tallas
+ * de adulto y una K solo de niño, porque mezclarlas es invitar a capturar mal.
+ * En las categorías ajustables el selector desaparece: no hay nada que decidir.
+ * La opción de escribirla a mano queda como válvula de escape para cuando el
+ * proveedor use otra escala, como centímetros.
  */
 export function SelectorTalla({
+  categoria,
   valor,
   alCambiar,
 }: {
+  categoria: Categoria | null
   valor: string | null
   alCambiar: (talla: string | null) => void
 }) {
-  const esLibre = valor !== null && !TALLAS_CONOCIDAS.includes(valor)
+  const info = categoria ? CATEGORIAS[categoria] : null
+  const esAjustable = info !== null && !info.usaTalla
+
+  const disponibles: readonly string[] = info
+    ? info.tallas
+    : // Sin tipo definido todavía no se puede acotar, así que se ofrecen todas.
+      [...TALLAS_FITTED, ...TALLAS_NINO]
+
+  const esLibre = valor !== null && !disponibles.includes(valor)
   const [escribiendo, setEscribiendo] = useState(esLibre)
 
-  const seleccion = escribiendo || esLibre ? OTRA : valor === null ? AJUSTABLE : valor
+  if (esAjustable) {
+    return (
+      <p className="tenue" style={{ margin: 0, padding: '10px 0' }}>
+        Ajustable: esta gorra no lleva talla.
+      </p>
+    )
+  }
+
+  const enModoLibre = escribiendo || esLibre
+  const seleccion = enModoLibre ? OTRA : valor === null ? SIN_TALLA : valor
 
   return (
     <>
@@ -35,28 +56,19 @@ export function SelectorTalla({
             return
           }
           setEscribiendo(false)
-          alCambiar(elegido === AJUSTABLE ? null : elegido)
+          alCambiar(elegido === SIN_TALLA ? null : elegido)
         }}
       >
-        <option value={AJUSTABLE}>Ajustable (sin talla)</option>
-        <optgroup label="Adulto">
-          {TALLAS_FITTED.map((talla) => (
-            <option key={talla} value={talla}>
-              {talla}
-            </option>
-          ))}
-        </optgroup>
-        <optgroup label="Niño">
-          {TALLAS_NINO.map((talla) => (
-            <option key={talla} value={talla}>
-              {talla}
-            </option>
-          ))}
-        </optgroup>
+        <option value={SIN_TALLA}>Sin talla (ajustable)</option>
+        {disponibles.map((talla) => (
+          <option key={talla} value={talla}>
+            {talla}
+          </option>
+        ))}
         <option value={OTRA}>Otra talla</option>
       </select>
 
-      {escribiendo || esLibre ? (
+      {enModoLibre ? (
         <input
           type="text"
           value={valor ?? ''}
