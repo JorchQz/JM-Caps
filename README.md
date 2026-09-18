@@ -50,7 +50,10 @@ servidor llega a necesitarla, se registra como secreto en Cloudflare.
 
 El panel se sirve como sitio estático desde Workers, no desde Pages: es el
 camino al que Cloudflare manda los proyectos nuevos. Vive en
-`admin.jmcaps.com.mx`; el dominio raíz queda libre para la tienda pública.
+`admin.jmcaps.com`; el dominio raíz queda libre para la tienda pública.
+
+El dominio está registrado en Cloudflare, así que la zona ya vive en la misma
+cuenta y no hay nameservers externos de por medio.
 
 La configuración del Worker está en `wrangler.jsonc`: sirve `apps/admin/dist` y
 usa `not_found_handling: "single-page-application"` para que entrar directo a
