@@ -46,32 +46,105 @@ VITE_SUPABASE_ANON_KEY
 La service role key no va en el repo ni en el cliente. Si alguna tarea de
 servidor llega a necesitarla, se registra como secreto en Cloudflare.
 
-## Despliegue en Cloudflare Pages
+## Despliegue en Cloudflare
 
-El panel vive en `admin.jmcaps.com.mx`. El dominio raíz queda libre para la
-tienda pública.
+El panel se sirve como sitio estático desde Workers (no Pages: es el camino que
+Cloudflare recomienda hoy para esto). Vive en ; el dominio
+raíz queda libre para la tienda pública.
 
-Configuración del proyecto de Pages (Workers & Pages > Create application >
-Pages > Connect to Git, repositorio `JorchQz/JM-Caps`):
+La configuración del Worker está en : sirve  y
+usa  para que entrar directo a
+ o recargar esa página no dé 404.
+
+Proyecto en Cloudflare, conectado al repo de GitHub:
 
 | Campo | Valor |
 |---|---|
-| Production branch | `main` |
-| Framework preset | Vite |
-| Build command | `npm run build` |
-| Build output directory | `apps/admin/dist` |
-| Root directory | vacío (la raíz del repo) |
+| Nombre del proyecto |  |
+| Comando de compilación |  |
+| Implementar comando | 
+╭─────────────────────────────────╮
+│ Did you mean "wrangler deploy"? │
+╰─────────────────────────────────╯
 
-Variables de entorno del proyecto: `VITE_SUPABASE_URL` y
-`VITE_SUPABASE_ANON_KEY`, las dos de arriba. Sin ellas el panel compila pero
-arranca con error de configuración.
+wrangler
 
-La versión de Node la fija `.nvmrc` (22): Vite 7 pide 20.19 o superior y el
+COMMANDS
+  wrangler docs [search..]        📚 Open Wrangler's command documentation in your browser
+  wrangler complete [shell]       ⌨️ Generate and handle shell completions
+
+  wrangler email                  Manage Cloudflare Email services [open beta]
+
+ACCOUNT
+  wrangler auth                   🔐 Manage authentication
+  wrangler login                  🔓 Login to Cloudflare
+  wrangler logout                 🚪 Logout from Cloudflare
+  wrangler whoami                 🕵️ Retrieve your user information
+
+COMPUTE & AI
+  wrangler agent-memory           🧠 Manage Agent Memory namespaces [private beta]
+  wrangler ai                     🤖 Manage AI models
+  wrangler ai-search              🔍 Manage AI Search instances [open beta]
+  wrangler browser                🌐 Manage Browser Run sessions [open beta]
+  wrangler containers             📦 Manage Containers
+  wrangler delete [name]          🗑️ Delete a Worker from Cloudflare
+  wrangler deploy [path]          🆙 Deploy a Worker to Cloudflare
+  wrangler deployments            🚢 List and view the current and past deployments for your Worker
+  wrangler dev [script]           👂 Start a local server for developing your Worker
+  wrangler dispatch-namespace     🏗️ Manage dispatch namespaces
+  wrangler flagship               🚩 Manage Flagship apps and feature flags [open beta]
+  wrangler init [name]            📥 Initialize a basic Worker
+  wrangler pages                  ⚡️ Configure Cloudflare Pages
+  wrangler preview [script]       👀 Create a Preview deployment of the current Worker [open beta]
+  wrangler queues                 📬 Manage Workers Queues
+  wrangler rollback [version-id]  🔙 Rollback a deployment for a Worker
+  wrangler secret                 🤫 Generate a secret that can be referenced in a Worker
+  wrangler setup                  🪄 Setup a project to work on Cloudflare
+  wrangler tail [worker]          🦚 Start a log tailing session for a Worker
+  wrangler triggers               🎯 Updates the triggers of your current deployment [experimental]
+  wrangler types [path]           📝 Generate types from your Worker configuration
+  wrangler versions               🫧 List, view, upload and deploy Versions of your Worker to Cloudflare
+  wrangler vpc                    🌐 Manage VPC [open beta]
+  wrangler workflows              🔁 Manage Workflows
+
+STORAGE & DATABASES
+  wrangler artifacts              🧱 Manage Artifacts namespaces and repos [private beta]
+  wrangler d1                     🗄️ Manage Workers D1 databases
+  wrangler hyperdrive             🚀 Manage Hyperdrive databases
+  wrangler kv                     🗂️ Manage Workers KV Namespaces
+  wrangler pipelines              🚰 Manage Cloudflare Pipelines [open beta]
+  wrangler r2                     📦 Manage R2 buckets & objects
+  wrangler secrets-store          🔐 Manage the Secrets Store [open beta]
+  wrangler vectorize              🧮 Manage Vectorize indexes
+
+NETWORKING & SECURITY
+  wrangler cert                   🪪 Manage client mTLS certificates and CA certificate chains used for secured connections [open beta]
+  wrangler mtls-certificate       🪪 Manage certificates used for mTLS connections
+  wrangler tunnel                 🚇 Manage Cloudflare Tunnels [experimental]
+  wrangler turnstile              🛡️ Manage Turnstile widgets [alpha]
+
+GLOBAL FLAGS
+  -c, --config          Path to Wrangler configuration file  [string]
+      --cwd             Run as if Wrangler was started in the specified directory instead of the current working directory  [string]
+  -e, --env             Environment to use for operations, and for selecting .env and .dev.vars files  [string]
+      --env-file        Path to an .env file to load - can be specified multiple times - values from earlier files are overridden by values in later files  [array]
+  -h, --help            Show help  [boolean]
+      --install-skills  Install Cloudflare skills for detected AI coding agents before running the command  [boolean] [default: false]
+      --profile         Use a specific auth profile  [string]
+  -v, --version         Show version number  [boolean]
+
+Please report any issues to https://github.com/cloudflare/workers-sdk/issues/new/choose |
+| Rama de producción |  |
+
+Variables de compilación del proyecto (Settings > Build):  y
+. Se necesitan al compilar, no en tiempo de ejecución:
+Vite las incrusta en el bundle. Sin ellas el panel despliega pero abre con
+error de configuración.
+
+La versión de Node la fija  (22): Vite 7 pide 20.19 o superior y el
 entorno de build de Cloudflare no siempre trae una reciente por defecto.
 
-`apps/admin/public/_redirects` manda todas las rutas a `index.html`, que es lo
-que necesita una SPA con rutas del lado del cliente. Sin eso, entrar directo a
-`/lotes` o recargar esa página da 404.
+Cada push a  dispara un despliegue.
 
 ## Cómo funciona el panel
 

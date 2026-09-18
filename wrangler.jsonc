@@ -1,0 +1,13 @@
+{
+  // Panel de administración: sitio estático servido por Workers.
+  // No hay código de servidor, solo los archivos que genera Vite.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jm-caps",
+  "compatibility_date": "2026-09-18",
+  "assets": {
+    "directory": "apps/admin/dist",
+    // El panel es una SPA: las rutas como /lotes o /modelo/:id solo existen en
+    // el navegador. Sin esto, entrar directo a una de ellas o recargar da 404.
+    "not_found_handling": "single-page-application"
+  }
+}
