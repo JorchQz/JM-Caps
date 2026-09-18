@@ -268,22 +268,47 @@ export async function eliminarUnidad(id: string): Promise<void> {
 // Lotes
 // ---------------------------------------------------------------------------
 
-export async function cargarLotes(): Promise<Array<Lote & { unidades: number }>> {
+export type LoteConConteo = Lote & {
+  unidades: number
+  /** Piezas que ya son inventario real. Mientras haya alguna, el lote no se puede borrar. */
+  unidadesReales: number
+}
+
+export async function cargarLotes(): Promise<LoteConConteo[]> {
   const [{ data: lotes, error }, { data: unidades, error: errorUnidades }] = await Promise.all([
     supabase.from('lotes').select('*').order('fecha_pedido', { ascending: false }),
-    supabase.from('unidades').select('lote_id'),
+    supabase.from('unidades').select('lote_id, estado'),
   ])
 
   if (error) fallar('No se pudieron cargar los lotes', error)
   if (errorUnidades) fallar('No se pudieron contar las unidades del lote', errorUnidades)
 
-  const conteo = new Map<string, number>()
+  const conteo = new Map<string, { total: number; reales: number }>()
   for (const unidad of unidades ?? []) {
     if (!unidad.lote_id) continue
-    conteo.set(unidad.lote_id, (conteo.get(unidad.lote_id) ?? 0) + 1)
+    const actual = conteo.get(unidad.lote_id) ?? { total: 0, reales: 0 }
+    actual.total += 1
+    if (unidad.estado !== 'pedido' && unidad.estado !== 'en_transito') actual.reales += 1
+    conteo.set(unidad.lote_id, actual)
   }
 
-  return (lotes ?? []).map((lote) => ({ ...lote, unidades: conteo.get(lote.id) ?? 0 }))
+  return (lotes ?? []).map((lote) => ({
+    ...lote,
+    unidades: conteo.get(lote.id)?.total ?? 0,
+    unidadesReales: conteo.get(lote.id)?.reales ?? 0,
+  }))
+}
+
+export type ResultadoEliminacion = { unidades_borradas: number; lineas_borradas: number }
+
+/**
+ * Borra un pedido que no se concretó, con sus líneas y sus piezas pendientes.
+ * La base lo rechaza si alguna pieza ya es inventario real: ese lote sí llegó.
+ */
+export async function eliminarLote(id: string): Promise<ResultadoEliminacion> {
+  const { data, error } = await supabase.rpc('eliminar_lote', { p_lote_id: id })
+  if (error) fallar('No se pudo borrar el pedido', error)
+  return data?.[0] ?? { unidades_borradas: 0, lineas_borradas: 0 }
 }
 
 export type DatosLote = {

@@ -419,6 +419,10 @@ export type Database = {
           total_usd: number
         }>
       }
+      eliminar_lote: {
+        Args: { p_lote_id: string }
+        Returns: Array<{ unidades_borradas: number; lineas_borradas: number }>
+      }
       crear_modelo: {
         Args: {
           p_categoria: Database['public']['Enums']['categoria_cachucha']

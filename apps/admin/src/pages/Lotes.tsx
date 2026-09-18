@@ -6,9 +6,10 @@ import {
   actualizarLote,
   cargarLotes,
   crearPedidoBorrador,
+  eliminarLote,
   llaves,
   prorratearCostos,
-  type Lote,
+  type LoteConConteo,
 } from '../lib/consultas'
 import { Aviso, Cargando, EncabezadoPagina, MensajeError, Vacio } from '../components/ui'
 
@@ -104,7 +105,7 @@ function FilaLote({
   alCambiar,
   alInformar,
 }: {
-  lote: Lote & { unidades: number }
+  lote: LoteConConteo
   alCambiar: () => void
   alInformar: (texto: string) => void
 }) {
@@ -119,6 +120,20 @@ function FilaLote({
     mutationFn: (estado: EstadoLote) =>
       actualizarLote(lote.id, { estado, fecha_recepcion: null }),
     onSuccess: alCambiar,
+  })
+
+  // Solo se puede borrar mientras nada haya llegado físicamente: en cuanto hay
+  // una pieza disponible, apartada o vendida, el lote es historial.
+  const sePuedeBorrar = lote.unidadesReales === 0
+
+  const borrar = useMutation({
+    mutationFn: () => eliminarLote(lote.id),
+    onSuccess: (resultado) => {
+      alInformar(
+        `Pedido borrado: ${resultado.lineas_borradas} artículo(s) y ${resultado.unidades_borradas} pieza(s) pendientes.`,
+      )
+      alCambiar()
+    },
   })
 
   const prorratear = useMutation({
@@ -198,9 +213,29 @@ function FilaLote({
             </button>
           </>
         )}
-        {prorratear.error ? (
+        <button
+          type="button"
+          className="discreto peligro"
+          disabled={!sePuedeBorrar || borrar.isPending}
+          title={
+            sePuedeBorrar
+              ? 'Borra el pedido con sus líneas y sus piezas pendientes'
+              : 'Este lote ya tiene piezas en inventario, por eso no se puede borrar'
+          }
+          onClick={() => {
+            const aviso =
+              lote.unidades > 0
+                ? `Se van a borrar este pedido y sus ${lote.unidades} pieza(s) pendientes. No se puede deshacer.`
+                : 'Se va a borrar este pedido. No se puede deshacer.'
+            if (confirm(aviso)) borrar.mutate()
+          }}
+        >
+          Borrar
+        </button>
+
+        {prorratear.error || borrar.error ? (
           <div className="tenue" style={{ fontSize: '0.78rem' }}>
-            {(prorratear.error as Error).message}
+            {((prorratear.error ?? borrar.error) as Error).message}
           </div>
         ) : null}
       </td>
