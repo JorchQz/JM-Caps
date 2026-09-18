@@ -404,7 +404,8 @@ export type Database = {
         Args: {
           p_modelo_id: string
           p_nombre: string
-          p_talla: string
+          /** Null en las gorras ajustables: la funcion compara con IS NOT DISTINCT FROM. */
+          p_talla: string | null
           p_telefono: string
         }
         Returns: string

@@ -9,8 +9,10 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace @jm-caps/admin",
+    "dev:tienda": "npm run dev --workspace @jm-caps/tienda",
     "build": "npm run build --workspace @jm-caps/admin",
-    "typecheck": "npm run typecheck --workspace @jm-caps/admin",
+    "build:tienda": "npm run build --workspace @jm-caps/tienda",
+    "typecheck": "npm run typecheck --workspace @jm-caps/admin && npm run typecheck --workspace @jm-caps/tienda",
     "gen:types": "npx supabase gen types typescript --project-id ndsnftmzmjsxxjdlwozk > packages/db/src/types.ts"
   },
   "engines": {

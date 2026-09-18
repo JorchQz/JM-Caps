@@ -1,0 +1,12 @@
+{
+  // Tienda publica: sitio estatico servido por Workers, igual que el panel
+  // pero como proyecto aparte. Van en dominios distintos y se despliegan por
+  // separado para que un cambio en el panel no toque la tienda.
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "jm-caps-tienda",
+  "compatibility_date": "2026-09-18",
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application"
+  }
+}

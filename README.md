@@ -8,6 +8,7 @@ más adelante, la tienda pública. El contexto de negocio completo está en
 
 ```
 apps/admin        Panel de administración (React + Vite + TypeScript)
+apps/tienda       Tienda pública que ve el cliente
 packages/db       Cliente de Supabase, tipos generados y reglas de dominio
 supabase/         Migraciones SQL aplicadas al proyecto
 ```
@@ -28,7 +29,9 @@ Comandos útiles:
 
 | Comando | Qué hace |
 |---|---|
-| `npm run dev` | Panel de administración en modo desarrollo |
+| `npm run dev` | Panel de administración en modo desarrollo (5173) |
+| `npm run dev:tienda` | Tienda pública en modo desarrollo (5174) |
+| `npm run build:tienda` | Compila la tienda a `apps/tienda/dist` |
 | `npm run build` | Compila el panel a `apps/admin/dist` |
 | `npm run typecheck` | Verifica tipos sin compilar |
 | `npm run gen:types` | Regenera `packages/db/src/types.ts` desde Supabase |

@@ -1,0 +1,577 @@
+/*
+  JM Caps — tienda pública.
+
+  El fondo es el gris jaspeado de la visera interior de una gorra, no el blanco
+  de tienda genérica: el producto vive sobre blanco puro para que las fotos
+  salten contra ese gris. El rojo está reservado para cuando de verdad queda
+  poco stock; si se usara para decorar, dejaría de significar algo.
+*/
+
+:root {
+  --gris: #dcdad5;
+  --gris-hondo: #c9c6c0;
+  --tinta: #16181a;
+  --tinta-suave: #5c6066;
+  --nieve: #ffffff;
+  --cobalto: #1f44d8;
+  --cobalto-hondo: #1836ad;
+  --ultima: #c5301f;
+
+  --borde: #b9b6af;
+  --radio: 3px;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--gris);
+  color: var(--tinta);
+  font-family: Archivo, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--cobalto);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------- marco */
+
+.envoltura {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.encabezado {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--gris);
+  border-bottom: 1px solid var(--borde);
+}
+
+.encabezado-fila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+}
+
+.logotipo {
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.lugar {
+  font-size: 0.85rem;
+  color: var(--tinta-suave);
+}
+
+/* ------------------------------------------------------------- portada */
+
+.portada {
+  padding: 28px 0 22px;
+}
+
+/* El conteo real de stock es el titular: es la promesa del negocio y cambia
+   solo con el inventario, así que nunca miente. */
+.portada-conteo {
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 11vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.portada-nota {
+  margin: 12px 0 0;
+  max-width: 34ch;
+  color: var(--tinta-suave);
+  font-size: 1rem;
+}
+
+/* -------------------------------------------------------------- filtros */
+
+.filtros {
+  position: sticky;
+  top: 53px;
+  z-index: 15;
+  background: var(--gris);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.filtros-carril {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.filtros-carril::-webkit-scrollbar {
+  display: none;
+}
+
+.ficha {
+  flex: none;
+  border: 1px solid var(--borde);
+  background: transparent;
+  color: var(--tinta);
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ficha:hover {
+  border-color: var(--tinta);
+}
+
+.ficha[aria-pressed='true'] {
+  background: var(--tinta);
+  border-color: var(--tinta);
+  color: var(--gris);
+  font-weight: 600;
+}
+
+.filtros-resumen {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--tinta-suave);
+}
+
+.enlace-limpiar {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--cobalto);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* -------------------------------------------------------------- rejilla */
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 18px 0 48px;
+}
+
+@media (min-width: 700px) {
+  .rejilla {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1000px) {
+  .rejilla {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  background: var(--nieve);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.tarjeta:hover .tarjeta-foto img {
+  transform: scale(1.03);
+}
+
+.tarjeta-foto {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--nieve);
+  overflow: hidden;
+}
+
+.tarjeta-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.sin-foto {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--tinta-suave);
+  font-size: 0.8rem;
+  background: repeating-linear-gradient(
+    45deg,
+    #f2f1ee,
+    #f2f1ee 8px,
+    #eceae6 8px,
+    #eceae6 16px
+  );
+}
+
+.marca-ultima {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--ultima);
+  color: var(--nieve);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.tarjeta-cuerpo {
+  padding: 10px 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.tarjeta-nombre {
+  font-weight: 700;
+  font-size: 0.97rem;
+  line-height: 1.25;
+}
+
+.tarjeta-detalle {
+  font-size: 0.82rem;
+  color: var(--tinta-suave);
+}
+
+.precio {
+  font-stretch: 112%;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+/* Las tallas son lo que el cliente busca primero: en la cultura fitted la
+   gente se identifica por su número. Por eso van en grande y no en gris. */
+.tallas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.talla {
+  font-stretch: 112%;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  border: 1px solid var(--borde);
+  padding: 2px 6px;
+  border-radius: var(--radio);
+}
+
+.talla-ajustable {
+  font-stretch: 100%;
+  font-weight: 600;
+  font-size: 0.78rem;
+  border-style: dashed;
+}
+
+/* ------------------------------------------------------------- producto */
+
+.producto {
+  padding: 16px 0 56px;
+}
+
+.volver {
+  display: inline-block;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+  color: var(--tinta-suave);
+}
+
+.producto-caja {
+  display: grid;
+  gap: 22px;
+}
+
+@media (min-width: 760px) {
+  .producto-caja {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 36px;
+    align-items: start;
+  }
+}
+
+.producto-foto {
+  aspect-ratio: 1;
+  background: var(--nieve);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.producto-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.producto-nombre {
+  font-stretch: 118%;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 6vw, 2.3rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.producto-equipo {
+  margin: 6px 0 0;
+  color: var(--tinta-suave);
+}
+
+.producto-precio {
+  font-stretch: 118%;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+  margin: 16px 0 0;
+}
+
+.producto-descripcion {
+  margin: 14px 0 0;
+  max-width: 48ch;
+  color: var(--tinta-suave);
+}
+
+.bloque {
+  margin-top: 24px;
+}
+
+.bloque-titulo {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0 0 9px;
+}
+
+.selector-tallas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.talla-boton {
+  font-stretch: 118%;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  min-width: 62px;
+  padding: 11px 12px;
+  background: var(--nieve);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+
+.talla-boton:hover {
+  border-color: var(--tinta);
+}
+
+.talla-boton[aria-pressed='true'] {
+  background: var(--tinta);
+  border-color: var(--tinta);
+  color: var(--nieve);
+}
+
+.talla-unica {
+  font-stretch: 100%;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------- formas */
+
+.formulario {
+  background: var(--nieve);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 16px;
+  margin-top: 24px;
+}
+
+.campo {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.campo span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.campo input {
+  width: 100%;
+  padding: 11px 12px;
+  background: var(--nieve);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.boton {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--cobalto);
+  color: var(--nieve);
+  border: 0;
+  border-radius: var(--radio);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.boton:hover:not(:disabled) {
+  background: var(--cobalto-hondo);
+}
+
+.boton:disabled {
+  background: var(--gris-hondo);
+  color: var(--tinta-suave);
+  cursor: not-allowed;
+}
+
+.boton-whatsapp {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  background: var(--tinta);
+}
+
+.boton-whatsapp:hover {
+  background: #000;
+}
+
+.nota-forma {
+  margin: 10px 0 0;
+  font-size: 0.83rem;
+  color: var(--tinta-suave);
+}
+
+.error {
+  margin: 0 0 12px;
+  padding: 11px 12px;
+  border-left: 3px solid var(--ultima);
+  background: #f7e9e7;
+  color: #7d1e12;
+  font-size: 0.9rem;
+}
+
+/* ------------------------------------------------------------ apartado */
+
+.apartado {
+  background: var(--nieve);
+  border: 1px solid var(--tinta);
+  border-radius: var(--radio);
+  padding: 20px;
+  margin-top: 24px;
+}
+
+.apartado h2 {
+  font-stretch: 118%;
+  font-size: 1.4rem;
+  margin: 0 0 8px;
+}
+
+.apartado p {
+  margin: 0 0 14px;
+  color: var(--tinta-suave);
+}
+
+.cuenta {
+  font-stretch: 118%;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+}
+
+/* -------------------------------------------------------------- estados */
+
+.mensaje {
+  padding: 56px 0;
+  text-align: center;
+  color: var(--tinta-suave);
+}
+
+.mensaje strong {
+  display: block;
+  font-stretch: 118%;
+  font-size: 1.3rem;
+  color: var(--tinta);
+  margin-bottom: 6px;
+}
+
+.pie {
+  border-top: 1px solid var(--borde);
+  padding: 22px 0 40px;
+  font-size: 0.85rem;
+  color: var(--tinta-suave);
+}
+
+.pie a {
+  color: var(--cobalto);
+}
