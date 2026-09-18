@@ -85,13 +85,15 @@ export const TALLAS_FITTED = [
 ] as const
 
 /**
- * Tallas de niño (categoría K). Son más chicas que cualquier talla de adulto,
- * por eso van en su propia lista y no como extensión de la anterior.
+ * Tallas de niño (categoría K). Son las tres que maneja el proveedor en su
+ * sección de niños; 6 7/8 se traslapa con la talla más chica de adulto.
  */
-export const TALLAS_NINO = ['6', '6 1/8', '6 1/4', '6 3/8', '6 1/2', '6 5/8', '6 3/4'] as const
+export const TALLAS_NINO = ['6 3/8', '6 1/2', '6 7/8'] as const
 
-/** Todas las tallas conocidas, para validar si una talla capturada es a la medida. */
-export const TALLAS_CONOCIDAS: readonly string[] = [...TALLAS_FITTED, ...TALLAS_NINO]
+/** Todas las tallas conocidas, para saber si una talla capturada es a la medida. */
+export const TALLAS_CONOCIDAS: readonly string[] = [
+  ...new Set<string>([...TALLAS_FITTED, ...TALLAS_NINO]),
+]
 
 export const ESTADOS_UNIDAD: Record<EstadoUnidad, string> = {
   pedido: 'Pedida',
