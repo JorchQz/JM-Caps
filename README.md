@@ -48,12 +48,30 @@ servidor llega a necesitarla, se registra como secreto en Cloudflare.
 
 ## Despliegue en Cloudflare Pages
 
-- Framework preset: Vite
-- Build command: `npm run build`
-- Build output directory: `apps/admin/dist`
-- Variables de entorno: las dos de arriba
-- `apps/admin/public/_redirects` ya manda todas las rutas a `index.html`, que es
-  lo que necesita una SPA con rutas del lado del cliente.
+El panel vive en `admin.jmcaps.com.mx`. El dominio raíz queda libre para la
+tienda pública.
+
+Configuración del proyecto de Pages (Workers & Pages > Create application >
+Pages > Connect to Git, repositorio `JorchQz/JM-Caps`):
+
+| Campo | Valor |
+|---|---|
+| Production branch | `main` |
+| Framework preset | Vite |
+| Build command | `npm run build` |
+| Build output directory | `apps/admin/dist` |
+| Root directory | vacío (la raíz del repo) |
+
+Variables de entorno del proyecto: `VITE_SUPABASE_URL` y
+`VITE_SUPABASE_ANON_KEY`, las dos de arriba. Sin ellas el panel compila pero
+arranca con error de configuración.
+
+La versión de Node la fija `.nvmrc` (22): Vite 7 pide 20.19 o superior y el
+entorno de build de Cloudflare no siempre trae una reciente por defecto.
+
+`apps/admin/public/_redirects` manda todas las rutas a `index.html`, que es lo
+que necesita una SPA con rutas del lado del cliente. Sin eso, entrar directo a
+`/lotes` o recargar esa página da 404.
 
 ## Cómo funciona el panel
 
