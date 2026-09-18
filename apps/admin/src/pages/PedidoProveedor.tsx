@@ -109,7 +109,13 @@ export function PedidoProveedor() {
   // El costeo del pedido solo cuenta lo vigente; la tabla necesita todas las
   // líneas para poder mostrar también las descartadas. Los escalones se
   // resuelven sobre lo vigente: lo descartado no debería abaratar el pedido.
-  const costeo = costearPedido(vigentes, listaPrecios, lote.data.tipo_cambio_dia, base)
+  const costeo = costearPedido(
+    vigentes,
+    listaPrecios,
+    lote.data.tipo_cambio_dia,
+    base,
+    lote.data.costo_envio_mxn,
+  )
   const costeoTodas = costearPedido(todas, listaPrecios, lote.data.tipo_cambio_dia, base)
   totalParaConfirmar.current = costeo.totalUsd > 0 ? costeo.totalUsd : null
 
@@ -201,6 +207,7 @@ export function PedidoProveedor() {
         costeo={costeo}
         base={base}
         tipoCambio={lote.data.tipo_cambio_dia}
+        envioMxn={lote.data.costo_envio_mxn}
         loteId={id}
         editable={esBorrador}
         alCambiar={() => {
@@ -282,6 +289,7 @@ function CosteoDelPedido({
   costeo,
   base,
   tipoCambio,
+  envioMxn,
   loteId,
   editable,
   alCambiar,
@@ -289,15 +297,22 @@ function CosteoDelPedido({
   costeo: CosteoPedido
   base: BaseEscalon
   tipoCambio: number | null
+  envioMxn: number
   loteId: string
   editable: boolean
   alCambiar: () => void
 }) {
   const [valor, setValor] = useState(tipoCambio ? String(tipoCambio) : '')
+  const [envio, setEnvio] = useState(envioMxn ? String(envioMxn) : '')
   const [abrirPrecios, setAbrirPrecios] = useState(false)
 
   const guardarCambio = useMutation({
     mutationFn: (nuevo: number | null) => actualizarLote(loteId, { tipo_cambio_dia: nuevo }),
+    onSuccess: alCambiar,
+  })
+
+  const guardarEnvio = useMutation({
+    mutationFn: (nuevo: number) => actualizarLote(loteId, { costo_envio_mxn: nuevo }),
     onSuccess: alCambiar,
   })
 
@@ -324,16 +339,22 @@ function CosteoDelPedido({
       {abrirPrecios ? <PreciosProveedor base={base} /> : null}
 
       <div className="rejilla">
-        <Indicador titulo="Total en dólares" valor={formatearUSD(costeo.totalUsd)} />
         <Indicador
-          titulo="Aproximado en pesos"
+          titulo="Le pagas al proveedor"
+          valor={formatearUSD(costeo.totalUsd)}
+          nota={costeo.mercanciaMxn === null ? undefined : formatearMXN(costeo.mercanciaMxn)}
+        />
+        <Indicador
+          titulo="Te cuesta en total"
           valor={costeo.totalMxn === null ? '-' : formatearMXN(costeo.totalMxn)}
-          nota={costeo.totalMxn === null ? 'Falta el tipo de cambio' : 'Al tipo de cambio de abajo'}
+          nota={
+            costeo.totalMxn === null ? 'Falta el tipo de cambio' : 'Mercancía más envío e impuestos'
+          }
         />
         <Indicador
           titulo="Costo por pieza"
           valor={costeo.costoPorPiezaMxn === null ? '-' : formatearMXN(costeo.costoPorPiezaMxn)}
-          nota="Sin contar envío ni impuestos"
+          nota="Lo que te sale cada gorra puesta aquí"
         />
         <Indicador
           titulo="Si lo vendes todo"
@@ -382,8 +403,27 @@ function CosteoDelPedido({
         </p>
       ) : null}
 
+      <Campo
+        etiqueta="Envío e impuestos (MXN)"
+        ayuda="Déjalo vacío hasta que lo sepas. Normalmente se conoce al pagar o cuando llega la caja; incluye aquí el impuesto de importación si aplicó."
+      >
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={envio}
+          placeholder="0"
+          onChange={(evento) => setEnvio(evento.target.value)}
+          onBlur={() => {
+            const numero = envio ? Number(envio) : 0
+            if (numero !== envioMxn) guardarEnvio.mutate(numero)
+          }}
+        />
+      </Campo>
+
       <MensajeError error={consulta.error} />
       <MensajeError error={guardarCambio.error} />
+      <MensajeError error={guardarEnvio.error} />
 
       {costeo.piezasSinPrecio > 0 ? (
         <Aviso>
@@ -395,8 +435,8 @@ function CosteoDelPedido({
 
       {costeo.totalUsd > 0 ? (
         <p className="tenue" style={{ fontSize: '0.86rem', marginBottom: 0 }}>
-          El envío y el impuesto de importación no están aquí: esos se conocen cuando llega el
-          lote y se reparten entre las piezas desde la pantalla de Lotes.
+          Cuando llegue el lote, el botón Prorratear de la pantalla de Lotes reparte este costo
+          entre las piezas que realmente llegaron.
         </p>
       ) : null}
     </div>

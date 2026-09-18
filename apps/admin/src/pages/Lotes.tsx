@@ -5,13 +5,12 @@ import { ESTADOS_LOTE, formatearMXN, type EstadoLote } from '@jm-caps/db'
 import {
   actualizarLote,
   cargarLotes,
-  crearLote,
   crearPedidoBorrador,
   llaves,
   prorratearCostos,
   type Lote,
 } from '../lib/consultas'
-import { Aviso, Campo, Cargando, EncabezadoPagina, MensajeError, Vacio } from '../components/ui'
+import { Aviso, Cargando, EncabezadoPagina, MensajeError, Vacio } from '../components/ui'
 
 const HOY = () => new Date().toISOString().slice(0, 10)
 
@@ -58,15 +57,13 @@ export function Lotes() {
       {mensaje ? <Aviso tipo="exito">{mensaje}</Aviso> : null}
       <MensajeError error={error} />
 
-      <NuevoLote alCrear={refrescar} />
-
       <div className="tarjeta">
-        <h2 style={{ marginBottom: 12 }}>Historial de lotes</h2>
+        <h2 style={{ marginBottom: 12 }}>Pedidos</h2>
 
         {isLoading ? (
           <Cargando />
         ) : (data ?? []).length === 0 ? (
-          <Vacio>Todavía no hay lotes registrados.</Vacio>
+          <Vacio>Todavía no hay pedidos. Arma el primero con el botón de arriba.</Vacio>
         ) : (
           <div className="tabla-contenedor">
             <table>
@@ -208,128 +205,5 @@ function FilaLote({
         ) : null}
       </td>
     </tr>
-  )
-}
-
-// ---------------------------------------------------------------------------
-
-function NuevoLote({ alCrear }: { alCrear: () => void }) {
-  const [abierto, setAbierto] = useState(false)
-  const [fecha, setFecha] = useState(HOY())
-  const [totalUsd, setTotalUsd] = useState('')
-  const [tipoCambio, setTipoCambio] = useState('')
-  const [envio, setEnvio] = useState('')
-  const [estado, setEstado] = useState<EstadoLote>('pedido')
-  const [notas, setNotas] = useState('')
-
-  const alta = useMutation({
-    mutationFn: () =>
-      crearLote({
-        fecha_pedido: fecha,
-        total_usd: totalUsd ? Number(totalUsd) : null,
-        tipo_cambio_dia: tipoCambio ? Number(tipoCambio) : null,
-        costo_envio_mxn: envio ? Number(envio) : 0,
-        estado,
-        notas: notas.trim() || null,
-      }),
-    onSuccess: () => {
-      setAbierto(false)
-      setTotalUsd('')
-      setTipoCambio('')
-      setEnvio('')
-      setNotas('')
-      alCrear()
-    },
-  })
-
-  if (!abierto) {
-    return (
-      <div className="tarjeta">
-        <button type="button" className="principal" onClick={() => setAbierto(true)}>
-          Registrar lote nuevo
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="tarjeta">
-      <h2 style={{ marginBottom: 12 }}>Lote nuevo</h2>
-
-      <form
-        onSubmit={(evento) => {
-          evento.preventDefault()
-          alta.mutate()
-        }}
-      >
-        <div className="rejilla">
-          <Campo etiqueta="Fecha del pedido">
-            <input
-              type="date"
-              value={fecha}
-              onChange={(evento) => setFecha(evento.target.value)}
-              required
-            />
-          </Campo>
-
-          <Campo etiqueta="Estado" ayuda="Para pedidos que ya hiciste fuera del panel. Los nuevos se arman con el botón de arriba.">
-            <select value={estado} onChange={(evento) => setEstado(evento.target.value as EstadoLote)}>
-              <option value="pedido">{ESTADOS_LOTE.pedido}</option>
-              <option value="en_transito">{ESTADOS_LOTE.en_transito}</option>
-              <option value="recibido">{ESTADOS_LOTE.recibido}</option>
-            </select>
-          </Campo>
-
-          <Campo etiqueta="Total en dólares" ayuda="Lo que cobró el proveedor por la mercancía.">
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={totalUsd}
-              onChange={(evento) => setTotalUsd(evento.target.value)}
-            />
-          </Campo>
-
-          <Campo etiqueta="Tipo de cambio del día">
-            <input
-              type="number"
-              min="0"
-              step="0.0001"
-              value={tipoCambio}
-              onChange={(evento) => setTipoCambio(evento.target.value)}
-              placeholder="18.50"
-            />
-          </Campo>
-
-          <Campo
-            etiqueta="Envío e impuestos (MXN)"
-            ayuda="Incluye aquí el impuesto de importación si aplicó, para que el costo por pieza sea real."
-          >
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={envio}
-              onChange={(evento) => setEnvio(evento.target.value)}
-            />
-          </Campo>
-        </div>
-
-        <Campo etiqueta="Notas">
-          <textarea rows={2} value={notas} onChange={(evento) => setNotas(evento.target.value)} />
-        </Campo>
-
-        <MensajeError error={alta.error} />
-
-        <div className="fila">
-          <button type="submit" className="principal" disabled={alta.isPending}>
-            {alta.isPending ? 'Guardando' : 'Guardar lote'}
-          </button>
-          <button type="button" onClick={() => setAbierto(false)}>
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </div>
   )
 }

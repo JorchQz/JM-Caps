@@ -32,6 +32,9 @@ export type CosteoPedido = {
   totalUsd: number
   piezasSinPrecio: number
   categoriasSinPrecio: string[]
+  /** Solo la mercancía, sin envío ni impuestos. */
+  mercanciaMxn: number | null
+  /** Mercancía más envío e impuestos: el costo real de tener el lote en mano. */
   totalMxn: number | null
   costoPorPiezaMxn: number | null
   ventaEstimadaMxn: number
@@ -91,6 +94,7 @@ export function costearPedido(
   escalones: PrecioProveedor[],
   tipoCambio: number | null,
   base: BaseEscalon = 'categoria',
+  envioMxn = 0,
 ): CosteoPedido {
   const detalle: CosteoLinea[] = lineas.map((linea) => {
     const piezasDelEscalon = piezasParaEscalon(linea, lineas, base)
@@ -125,7 +129,10 @@ export function costearPedido(
     ...new Set(sinPrecio.map((fila) => fila.linea.categoria ?? 'sin tipo definido')),
   ]
 
-  const totalMxn = tipoCambio && tipoCambio > 0 ? totalUsd * tipoCambio : null
+  // El envío y el impuesto de importación se suman al costo, no a lo que le
+  // pagas al proveedor: por eso van aparte del total en dólares.
+  const mercanciaMxn = tipoCambio && tipoCambio > 0 ? totalUsd * tipoCambio : null
+  const totalMxn = mercanciaMxn === null ? null : mercanciaMxn + envioMxn
   const ventaEstimadaMxn = detalle.reduce(
     (suma, fila) => suma + (fila.ventaMxn ?? 0) * fila.linea.cantidad,
     0,
@@ -137,6 +144,7 @@ export function costearPedido(
     totalUsd,
     piezasSinPrecio,
     categoriasSinPrecio,
+    mercanciaMxn,
     totalMxn,
     costoPorPiezaMxn: totalMxn !== null && piezas > 0 ? totalMxn / piezas : null,
     ventaEstimadaMxn,
