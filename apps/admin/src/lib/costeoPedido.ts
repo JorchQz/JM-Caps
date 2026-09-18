@@ -3,8 +3,8 @@ import type { LineaConModelo, PrecioProveedor } from './consultas'
 
 /**
  * Qué cantidad decide el escalón de precio. El proveedor confirmó que su oferta
- * por volumen es por diseño: para bajar de escalón hay que pedir esa cantidad
- * del mismo modelo. Queda configurable por si algún día cambia de política.
+ * por volumen es por tipo de gorra: 30 AA repartidas en varios diseños alcanzan
+ * el escalón de 30. Queda configurable por si algún día cambia de política.
  */
 export type BaseEscalon = 'diseno' | 'categoria' | 'pedido'
 
@@ -90,7 +90,7 @@ export function costearPedido(
   lineas: LineaConModelo[],
   escalones: PrecioProveedor[],
   tipoCambio: number | null,
-  base: BaseEscalon = 'diseno',
+  base: BaseEscalon = 'categoria',
 ): CosteoPedido {
   const detalle: CosteoLinea[] = lineas.map((linea) => {
     const piezasDelEscalon = piezasParaEscalon(linea, lineas, base)

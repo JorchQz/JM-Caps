@@ -104,7 +104,7 @@ export function PedidoProveedor() {
   const faltanParaMinimo = Math.max(0, MINIMO_PIEZAS_PEDIDO - piezas)
 
   const listaPrecios = precios.data ?? []
-  const base = (baseEscalon.data as BaseEscalon | null) ?? 'diseno'
+  const base = (baseEscalon.data as BaseEscalon | null) ?? 'categoria'
   // El costeo del pedido solo cuenta lo vigente; la tabla necesita todas las
   // líneas para poder mostrar también las descartadas. Los escalones se
   // resuelven sobre lo vigente: lo descartado no debería abaratar el pedido.
@@ -452,7 +452,7 @@ function PreciosProveedor({ base }: { base: BaseEscalon }) {
 
       <Campo
         etiqueta="Qué cantidad decide el escalón"
-        ayuda="El proveedor confirmó que la oferta por volumen es por diseño: para bajar de escalón hay que pedir esa cantidad del mismo modelo. Solo cámbialo si algún día lo cambia él."
+        ayuda="El proveedor confirmó que la oferta por volumen es por tipo de gorra: 30 AA repartidas en varios diseños ya alcanzan el escalón de 30. Solo cámbialo si algún día lo cambia él."
       >
         <select
           value={base}

@@ -115,7 +115,7 @@ UU y UUS no tienen precios: están pausadas.
 
 **`configuracion`** — ajustes del negocio que cambian sin tocar código.
 - `clave` (text, pk), `valor` (text), `descripcion` (text)
-- `base_escalon`: qué cantidad decide el escalón de precio — `diseno`, `categoria` o `pedido`. **Está en `diseno`, confirmado por el proveedor:** la oferta por volumen aplica a piezas del mismo modelo, no al pedido completo. En la práctica esto significa que los pedidos chicos y variados van a pagar casi siempre el primer escalón (8.50 y 16.00), porque bajar a 8.00 exige 30 piezas de un solo diseño.
+- `base_escalon`: qué cantidad decide el escalón de precio — `diseno`, `categoria` o `pedido`. **Está en `categoria`, confirmado por el proveedor:** la oferta por volumen aplica por tipo de gorra, así que 30 AA repartidas en varios diseños ya alcanzan el escalón de 30. DH tiene su propia escalera porque es más cara y más difícil de fabricar.
 
 **`ventas`** — encabezado de cada venta
 - `id` (uuid, pk), `fecha`, `total_mxn`, `metodo_pago` (enum: efectivo/spei/otro), `canal` (enum: local_colotlan/local_tepatitlan/envio_nacional), `cliente_nombre`, `cliente_telefono`
