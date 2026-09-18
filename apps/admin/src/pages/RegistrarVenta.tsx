@@ -15,12 +15,15 @@ import {
   type UnidadConModelo,
 } from '../lib/consultas'
 import { Aviso, Campo, Cargando, EncabezadoPagina, MensajeError, Vacio } from '../components/ui'
+import { EscanerQR } from '../components/EscanerQR'
 
 export function RegistrarVenta() {
   const clienteQuery = useQueryClient()
   const campoBusqueda = useRef<HTMLInputElement>(null)
 
   const [busqueda, setBusqueda] = useState('')
+  const [escaneando, setEscaneando] = useState(false)
+  const [avisoEscaneo, setAvisoEscaneo] = useState<string | null>(null)
   const [carrito, setCarrito] = useState<UnidadConModelo[]>([])
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('efectivo')
   const [canal, setCanal] = useState<CanalVenta>('local_colotlan')
@@ -40,7 +43,7 @@ export function RegistrarVenta() {
       .filter((unidad) => {
         if (enCarrito.has(unidad.id)) return false
         return (
-          unidad.id.toLowerCase().startsWith(texto) ||
+          unidad.folio.includes(texto) ||
           unidad.modelo.nombre.toLowerCase().includes(texto) ||
           unidad.modelo.codigo.toLowerCase().includes(texto) ||
           (unidad.modelo.color ?? '').toLowerCase().includes(texto)
@@ -54,7 +57,9 @@ export function RegistrarVenta() {
   function agregar(unidad: UnidadConModelo) {
     setCarrito((previo) => (previo.some((x) => x.id === unidad.id) ? previo : [...previo, unidad]))
     setBusqueda('')
-    campoBusqueda.current?.focus()
+    // Con la cámara abierta, enfocar el campo levantaría el teclado encima del
+    // visor justo cuando se está apuntando a la siguiente gorra.
+    if (!escaneando) campoBusqueda.current?.focus()
   }
 
   function quitar(id: string) {
@@ -67,7 +72,7 @@ export function RegistrarVenta() {
     const texto = busqueda.trim().toLowerCase()
     if (!texto) return
 
-    const exacta = (vendibles.data ?? []).find((unidad) => unidad.id.toLowerCase() === texto)
+    const exacta = (vendibles.data ?? []).find((unidad) => unidad.folio === texto)
     if (exacta) {
       agregar(exacta)
       return
@@ -117,17 +122,57 @@ export function RegistrarVenta() {
         <form onSubmit={alEnviarBusqueda}>
           <Campo
             etiqueta="Escanear o buscar pieza"
-            ayuda="El lector de códigos escribe el identificador y confirma solo. También puedes escribir el nombre del modelo."
+            ayuda="Escanea con la cámara, teclea el folio de la etiqueta, o busca por nombre del modelo."
           >
-            <input
-              ref={campoBusqueda}
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              placeholder="Código de la pieza o nombre del modelo"
-              autoFocus
-            />
+            <div className="fila">
+              <input
+                ref={campoBusqueda}
+                value={busqueda}
+                onChange={(evento) => setBusqueda(evento.target.value)}
+                placeholder="Folio o nombre del modelo"
+                inputMode="numeric"
+                style={{ flex: '1 1 200px' }}
+                autoFocus
+              />
+              <button
+                type="button"
+                className={escaneando ? '' : 'principal'}
+                onClick={() => {
+                  setAvisoEscaneo(null)
+                  setEscaneando(!escaneando)
+                }}
+              >
+                {escaneando ? 'Cerrar cámara' : 'Escanear'}
+              </button>
+            </div>
           </Campo>
         </form>
+
+        {escaneando ? (
+          <EscanerQR
+            alCerrar={() => setEscaneando(false)}
+            alLeer={(texto) => {
+              const folio = texto.trim()
+              const unidad = (vendibles.data ?? []).find((pieza) => pieza.folio === folio)
+
+              if (!unidad) {
+                setAvisoEscaneo(
+                  `El folio ${folio} no está disponible para venta. Puede que ya se haya vendido o que la etiqueta sea de otra tienda.`,
+                )
+                return
+              }
+              if (enCarrito.has(unidad.id)) {
+                setAvisoEscaneo(`${unidad.modelo.nombre} (folio ${folio}) ya está en la venta.`)
+                return
+              }
+
+              setAvisoEscaneo(`Agregada: ${unidad.modelo.nombre} · folio ${folio}`)
+              agregar(unidad)
+            }}
+          />
+        ) : null}
+
+        {avisoEscaneo ? <Aviso>{avisoEscaneo}</Aviso> : null}
 
         {vendibles.isLoading ? <Cargando texto="Cargando piezas" /> : null}
         <MensajeError error={vendibles.error} />
@@ -178,7 +223,7 @@ export function RegistrarVenta() {
                     <td>
                       <strong>{unidad.modelo.nombre}</strong>
                       <div className="tenue" style={{ fontSize: '0.83rem' }}>
-                        <span className="mono">{unidad.id.slice(0, 8)}</span> ·{' '}
+                        <span className="mono">{unidad.folio}</span> ·{' '}
                         {unidad.talla ?? 'Ajustable'}
                       </div>
                     </td>

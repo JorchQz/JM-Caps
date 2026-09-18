@@ -779,9 +779,9 @@ function FilaLinea({
             {ESTADOS_LINEA[linea.estado]}
           </span>
         )}
-        {linea.unidades_creadas > 0 ? (
+        {linea.unidadesCreadas > 0 ? (
           <div className="tenue" style={{ fontSize: '0.78rem' }}>
-            {linea.unidades_creadas} capturada(s)
+            {linea.unidadesCreadas} capturada(s)
           </div>
         ) : null}
       </td>

@@ -371,33 +371,17 @@ export async function obtenerLote(id: string): Promise<Lote> {
   return data
 }
 
+export type ResultadoProrrateo = { costo_unitario: number; piezas: number }
+
 /**
- * Reparte el costo del lote entre sus unidades: (total USD * tipo de cambio +
- * envío) / numero de unidades. Es el costo real por gorra que usan los reportes.
+ * Reparte el costo del lote (mercancía por tipo de cambio, más envío e
+ * impuestos) entre las piezas que realmente llegaron. Las que no llegaron
+ * quedan fuera: si contaran, abaratarían el costo de lo que sí tienes en mano.
  */
-export async function prorratearCostos(loteId: string): Promise<number> {
-  const { data: lote, error } = await supabase.from('lotes').select('*').eq('id', loteId).single()
-  if (error) fallar('No se pudo cargar el lote', error)
-
-  const { data: unidades, error: errorUnidades } = await supabase
-    .from('unidades')
-    .select('id')
-    .eq('lote_id', loteId)
-
-  if (errorUnidades) fallar('No se pudieron cargar las unidades del lote', errorUnidades)
-  const total = unidades?.length ?? 0
-  if (total === 0) throw new Error('El lote no tiene unidades registradas todavía')
-
-  const costoMercancia = (lote.total_usd ?? 0) * (lote.tipo_cambio_dia ?? 0)
-  const costoUnitario = Math.round(((costoMercancia + lote.costo_envio_mxn) / total) * 100) / 100
-
-  const { error: errorActualizar } = await supabase
-    .from('unidades')
-    .update({ costo_unitario_mxn: costoUnitario })
-    .eq('lote_id', loteId)
-
-  if (errorActualizar) fallar('No se pudo guardar el costo prorrateado', errorActualizar)
-  return costoUnitario
+export async function prorratearCostos(loteId: string): Promise<ResultadoProrrateo> {
+  const { data, error } = await supabase.rpc('prorratear_costos', { p_lote_id: loteId })
+  if (error) fallar('No se pudo prorratear el costo', error)
+  return data?.[0] ?? { costo_unitario: 0, piezas: 0 }
 }
 
 // ---------------------------------------------------------------------------
@@ -405,7 +389,14 @@ export async function prorratearCostos(loteId: string): Promise<number> {
 // ---------------------------------------------------------------------------
 
 export type LineaPedido = Tables<'pedido_lineas'>
-export type LineaConModelo = LineaPedido & { modelo: Modelo | null }
+export type LineaConModelo = LineaPedido & {
+  modelo: Modelo | null
+  /**
+   * Piezas ya capturadas de esta línea. Se cuenta, no se guarda: así borrar una
+   * pieza corrige el avance solo, en vez de dejar la línea como completa.
+   */
+  unidadesCreadas: number
+}
 
 export async function crearPedidoBorrador(fecha: string, notas: string | null): Promise<Lote> {
   return crearLote({
@@ -421,13 +412,22 @@ export async function crearPedidoBorrador(fecha: string, notas: string | null): 
 export async function lineasDePedido(loteId: string): Promise<LineaConModelo[]> {
   const { data, error } = await supabase
     .from('pedido_lineas')
-    .select('*, modelo:modelos(*)')
+    .select('*, modelo:modelos(*), unidades(count)')
     .eq('lote_id', loteId)
     .order('orden', { ascending: true })
     .order('created_at', { ascending: true })
 
   if (error) fallar('No se pudieron cargar las líneas del pedido', error)
-  return (data as LineaConModelo[] | null) ?? []
+
+  type Cruda = LineaPedido & {
+    modelo: Modelo | null
+    unidades: Array<{ count: number }> | null
+  }
+
+  return ((data as Cruda[] | null) ?? []).map(({ unidades, ...linea }) => ({
+    ...linea,
+    unidadesCreadas: unidades?.[0]?.count ?? 0,
+  }))
 }
 
 export type DatosLinea = {

@@ -92,8 +92,8 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 **`modelos`** — el producto visible al cliente
 - `id` (uuid, pk), `codigo` (text, unique — lo genera la base, formato `AA-001`), `categoria` (enum: AA/AAS/UU/UUS/K/DH), `nombre` (text), `equipo` (text, null en diseños sin logo), `color` (text), `descripcion` (text), `precio_venta_mxn` (numeric), `foto_url` (text), `link_yupoo` (text, **unique y not null** — es la llave real para saber si un modelo ya existe al dar de alta mercancía nueva), `activo` (boolean)
 
-**`unidades`** — una fila = una gorra física. El `id` es el valor que va en el código de barras/QR.
-- `id` (uuid, pk), `modelo_id` (fk → modelos), `lote_id` (fk → lotes), `talla` (text, null si es ajustable), `costo_unitario_mxn` (numeric), `estado` (enum: pedido/en_transito/disponible/apartada/vendida), `apartado_hasta` (timestamptz), `apartado_nombre` (text), `apartado_telefono` (text), `foto_real_url` (text — foto de la unidad física real, no la del proveedor), `fecha_alta` (timestamptz), `fecha_venta` (timestamptz)
+**`unidades`** — una fila = una gorra física. El `folio` es el valor que va en el QR de la etiqueta y el que se escanea al vender.
+- `id` (uuid, pk), `folio` (text, unique — número corto de 6 dígitos, se genera solo), `modelo_id` (fk → modelos), `linea_id` (fk → pedido_lineas, de qué línea del pedido salió), `lote_id` (fk → lotes), `talla` (text, null si es ajustable), `costo_unitario_mxn` (numeric), `estado` (enum: pedido/en_transito/disponible/apartada/vendida), `apartado_hasta` (timestamptz), `apartado_nombre` (text), `apartado_telefono` (text), `foto_real_url` (text — foto de la unidad física real, no la del proveedor), `fecha_alta` (timestamptz), `fecha_venta` (timestamptz)
 
 **`lotes`** — cada pedido al proveedor
 - `id` (uuid, pk), `fecha_pedido` (date), `fecha_recepcion` (date), `tipo_cambio_dia` (numeric), `total_usd` (numeric), `costo_envio_mxn` (numeric — para prorratear entre unidades), `estado` (enum: borrador/pedido/en_transito/recibido)
@@ -149,6 +149,7 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 ### Seguridad (RLS)
 
 - RLS activo en las 9 tablas.
+- Además de RLS hay permisos por columna: el rol `anon` **no** puede leer `modelos.link_yupoo` (revela al proveedor) ni `unidades.folio`, `costo_unitario_mxn` o los datos del apartado. La vista `catalogo_publico` es `security_invoker`, así que depende de esos permisos y no los rodea.
 - El público (`anon`) solo puede: leer `catalogo_publico`, leer columnas seguras de `modelos`/`unidades` (sin costos ni datos de apartado) filtradas por `activo`/`disponible`, y ejecutar `apartar_unidad()`.
 - Cualquier usuario autenticado (el admin) tiene acceso completo a todo, vía políticas `admin_full_access`. El usuario admin se crea manualmente en Authentication → Users del dashboard de Supabase.
 - Bucket de Storage `fotos-productos`: lectura pública, solo un usuario autenticado puede subir/editar/borrar.

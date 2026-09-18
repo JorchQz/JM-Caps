@@ -141,7 +141,6 @@ export type Database = {
           orden: number
           precio_usd_unitario: number | null
           talla: string | null
-          unidades_creadas: number
         }
         Insert: {
           cantidad?: number
@@ -156,7 +155,6 @@ export type Database = {
           orden?: number
           precio_usd_unitario?: number | null
           talla?: string | null
-          unidades_creadas?: number
         }
         Update: {
           cantidad?: number
@@ -171,7 +169,6 @@ export type Database = {
           orden?: number
           precio_usd_unitario?: number | null
           talla?: string | null
-          unidades_creadas?: number
         }
         Relationships: [
           {
@@ -245,8 +242,10 @@ export type Database = {
           estado: Database['public']['Enums']['estado_unidad']
           fecha_alta: string | null
           fecha_venta: string | null
+          folio: string
           foto_real_url: string | null
           id: string
+          linea_id: string | null
           lote_id: string | null
           modelo_id: string
           talla: string | null
@@ -261,8 +260,10 @@ export type Database = {
           estado?: Database['public']['Enums']['estado_unidad']
           fecha_alta?: string | null
           fecha_venta?: string | null
+          folio?: string
           foto_real_url?: string | null
           id?: string
+          linea_id?: string | null
           lote_id?: string | null
           modelo_id: string
           talla?: string | null
@@ -277,8 +278,10 @@ export type Database = {
           estado?: Database['public']['Enums']['estado_unidad']
           fecha_alta?: string | null
           fecha_venta?: string | null
+          folio?: string
           foto_real_url?: string | null
           id?: string
+          linea_id?: string | null
           lote_id?: string | null
           modelo_id?: string
           talla?: string | null
@@ -290,6 +293,13 @@ export type Database = {
             columns: ['lote_id']
             isOneToOne: false
             referencedRelation: 'lotes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'unidades_linea_id_fkey'
+            columns: ['linea_id']
+            isOneToOne: false
+            referencedRelation: 'pedido_lineas'
             referencedColumns: ['id']
           },
           {
@@ -418,6 +428,10 @@ export type Database = {
           piezas: number
           total_usd: number
         }>
+      }
+      prorratear_costos: {
+        Args: { p_lote_id: string }
+        Returns: Array<{ costo_unitario: number; piezas: number }>
       }
       eliminar_lote: {
         Args: { p_lote_id: string }

@@ -138,8 +138,10 @@ function FilaLote({
 
   const prorratear = useMutation({
     mutationFn: () => prorratearCostos(lote.id),
-    onSuccess: (costo) => {
-      alInformar(`Costo prorrateado: ${formatearMXN(costo)} por pieza en ${lote.unidades} unidades.`)
+    onSuccess: (resultado) => {
+      alInformar(
+        `Costo real: ${formatearMXN(resultado.costo_unitario)} por gorra, repartido entre las ${resultado.piezas} pieza(s) que llegaron.`,
+      )
       alCambiar()
     },
   })
@@ -205,9 +207,9 @@ function FilaLote({
             <button
               type="button"
               className="discreto"
-              disabled={prorratear.isPending || lote.unidades === 0}
+              disabled={prorratear.isPending || lote.unidadesReales === 0}
               onClick={() => prorratear.mutate()}
-              title="Guarda el costo calculado en cada pieza del lote"
+              title="Reparte el costo del lote entre las piezas que llegaron y lo guarda en cada una"
             >
               Prorratear
             </button>

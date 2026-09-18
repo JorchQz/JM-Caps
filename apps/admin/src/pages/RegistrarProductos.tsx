@@ -67,7 +67,7 @@ export function RegistrarProductos() {
   })
 
   const pendientes = (lineas.data ?? []).filter(
-    (linea) => linea.estado === 'confirmada' && linea.unidades_creadas < linea.cantidad,
+    (linea) => linea.estado === 'confirmada' && linea.unidadesCreadas < linea.cantidad,
   )
 
   const busqueda = useMutation({
@@ -167,7 +167,7 @@ export function RegistrarProductos() {
                     </td>
                     <td>{linea.talla ?? 'Ajustable'}</td>
                     <td className="numero">
-                      {linea.cantidad - linea.unidades_creadas} de {linea.cantidad}
+                      {linea.cantidad - linea.unidadesCreadas} de {linea.cantidad}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <button type="button" onClick={() => capturarLinea(linea)}>
@@ -459,7 +459,7 @@ function FormularioUnidades({
 
   // Si viene de una linea del pedido, talla y cantidad ya se acordaron con el
   // proveedor: se precargan para no recapturar lo que ya esta decidido.
-  const faltantes = linea ? Math.max(1, linea.cantidad - linea.unidades_creadas) : 1
+  const faltantes = linea ? Math.max(1, linea.cantidad - linea.unidadesCreadas) : 1
   const [talla, setTalla] = useState<string | null>(linea ? linea.talla : info.tallaSugerida)
   const [cantidad, setCantidad] = useState(String(faltantes))
   const [costo, setCosto] = useState('')

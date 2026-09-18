@@ -415,33 +415,61 @@ tr:last-child td {
 
 .hoja-etiquetas {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, var(--ancho-etiqueta, 50mm));
+  gap: 2mm;
+  justify-content: start;
 }
 
 .etiqueta {
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  padding: 10px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 1.5mm;
+  padding: 1.5mm;
+  border: 1px solid #bbb;
+  border-radius: 1mm;
   background: #fff;
-  color: #111;
+  color: #000;
+  overflow: hidden;
+  /* Nunca partir una etiqueta entre dos paginas. */
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .etiqueta img {
-  width: 100%;
-  max-width: 110px;
+  flex: none;
+  display: block;
 }
 
-.etiqueta .titulo {
+.etiqueta-datos {
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.etiqueta-folio {
+  font-family: 'Cascadia Mono', ui-monospace, Menlo, monospace;
+  font-size: 3.6mm;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.etiqueta-nombre {
+  font-size: 2.6mm;
   font-weight: 600;
-  font-size: 0.8rem;
-  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.etiqueta .detalle {
-  font-size: 0.72rem;
+.etiqueta-detalle {
+  font-size: 2.3mm;
   color: #444;
+  white-space: nowrap;
+}
+
+.etiqueta-precio {
+  font-size: 3mm;
+  font-weight: 700;
+  margin-top: 0.5mm;
 }
 
 /* -------------------------------------------------------------- pequeno */
@@ -486,6 +514,11 @@ tr:last-child td {
   }
 }
 
+@page {
+  size: letter;
+  margin: 8mm;
+}
+
 @media print {
   .barra-lateral,
   .encabezado-pagina,
@@ -503,7 +536,13 @@ tr:last-child td {
     max-width: none;
   }
 
+  /* Las etiquetas conservan su tamano en milimetros: el navegador no debe
+     reacomodarlas ni escalarlas o dejarian de coincidir con el papel. */
   .hoja-etiquetas {
-    grid-template-columns: repeat(4, 1fr);
+    gap: 2mm;
+  }
+
+  .etiqueta {
+    border-color: #999;
   }
 }

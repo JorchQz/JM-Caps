@@ -27,13 +27,18 @@ import {
   MensajeError,
   Vacio,
 } from '../components/ui'
-import { EtiquetasQR } from '../components/EtiquetasQR'
+import {
+  EtiquetasQR,
+  TAMANOS_ETIQUETA,
+  type TamanoEtiqueta,
+} from '../components/EtiquetasQR'
 
 export function ModeloDetalle() {
   const { id = '' } = useParams()
   const clienteQuery = useQueryClient()
   const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set())
   const [imprimiendo, setImprimiendo] = useState(false)
+  const [tamano, setTamano] = useState<TamanoEtiqueta>('mediana')
 
   const modelo = useQuery({ queryKey: llaves.modelo(id), queryFn: () => obtenerModelo(id) })
   const unidades = useQuery({
@@ -70,16 +75,35 @@ export function ModeloDetalle() {
   if (imprimiendo) {
     return (
       <>
-        <div className="no-imprimir fila" style={{ marginBottom: 16 }}>
-          <button type="button" className="principal" onClick={() => window.print()}>
-            Imprimir
-          </button>
-          <button type="button" onClick={() => setImprimiendo(false)}>
-            Volver
-          </button>
-          <span className="tenue">{paraEtiquetas.length} etiqueta(s)</span>
+        <div className="no-imprimir" style={{ marginBottom: 16 }}>
+          <div className="fila">
+            <button type="button" className="principal" onClick={() => window.print()}>
+              Imprimir
+            </button>
+            <select
+              value={tamano}
+              style={{ width: 'auto' }}
+              onChange={(evento) => setTamano(evento.target.value as TamanoEtiqueta)}
+            >
+              {Object.entries(TAMANOS_ETIQUETA).map(([clave, info]) => (
+                <option key={clave} value={clave}>
+                  {info.etiqueta}
+                </option>
+              ))}
+            </select>
+            <button type="button" onClick={() => setImprimiendo(false)}>
+              Volver
+            </button>
+            <span className="tenue">{paraEtiquetas.length} etiqueta(s)</span>
+          </div>
+
+          <p className="tenue" style={{ fontSize: '0.85rem', maxWidth: '62ch' }}>
+            En el diálogo de impresión pon la escala en 100 por ciento, no en "ajustar a la
+            página": si el navegador la reduce, el código se imprime más chico y cuesta más
+            escanearlo. Las medidas de arriba son las reales sobre el papel.
+          </p>
         </div>
-        <EtiquetasQR modelo={datos} unidades={paraEtiquetas} />
+        <EtiquetasQR modelo={datos} unidades={paraEtiquetas} tamano={tamano} />
       </>
     )
   }
@@ -140,7 +164,7 @@ export function ModeloDetalle() {
               <thead>
                 <tr>
                   <th style={{ width: 34 }} />
-                  <th>Código de la pieza</th>
+                  <th>Folio</th>
                   <th>Talla</th>
                   <th>Estado</th>
                   <th>Apartado</th>
@@ -201,8 +225,8 @@ function FilaUnidad({
       <td>
         <input type="checkbox" checked={seleccionada} onChange={alAlternar} />
       </td>
-      <td className="mono" style={{ fontSize: '0.78rem' }}>
-        {unidad.id.slice(0, 8)}
+      <td className="mono">
+        <strong>{unidad.folio}</strong>
       </td>
       <td>{unidad.talla ?? 'Ajustable'}</td>
       <td>
