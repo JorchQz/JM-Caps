@@ -1,6 +1,7 @@
 import type { Categoria, Tables } from '@jm-caps/db'
 import { normalizarLinkYupoo } from '@jm-caps/db'
 import { supabase } from './supabase'
+import { comprimirFoto } from './imagen'
 
 export type Modelo = Tables<'modelos'>
 export type Unidad = Tables<'unidades'>
@@ -662,13 +663,19 @@ export async function cargarVentas(limite = 50): Promise<VentaConItems[]> {
 // Fotos
 // ---------------------------------------------------------------------------
 
-/** Sube una foto al bucket publico y devuelve su URL definitiva. */
+/**
+ * Sube una foto al bucket público y devuelve su URL definitiva. Se comprime
+ * antes: las fotos de celular pesan varios megas y el catálogo lo abre el
+ * cliente con datos móviles.
+ */
 export async function subirFoto(archivo: File, carpeta: string): Promise<string> {
-  const extension = archivo.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const listo = await comprimirFoto(archivo)
+  const extension = listo.name.split('.').pop()?.toLowerCase() ?? 'jpg'
   const nombre = `${carpeta}/${crypto.randomUUID()}.${extension}`
 
-  const { error } = await supabase.storage.from(BUCKET_FOTOS).upload(nombre, archivo, {
+  const { error } = await supabase.storage.from(BUCKET_FOTOS).upload(nombre, listo, {
     cacheControl: '31536000',
+    contentType: listo.type,
     upsert: false,
   })
 
