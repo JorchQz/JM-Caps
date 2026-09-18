@@ -89,7 +89,7 @@ export const TALLAS_FITTED = [
   '8',
 ] as const
 
-/** Tallas de niño (categoría K), de 6 a 7 en octavos. El 7 se traslapa con adulto. */
+/** Tallas de niño (categoría K), de 6 a 6 7/8 en octavos. El 7 ya es de adulto. */
 export const TALLAS_NINO = [
   '6',
   '6 1/8',
@@ -99,7 +99,6 @@ export const TALLAS_NINO = [
   '6 5/8',
   '6 3/4',
   '6 7/8',
-  '7',
 ] as const
 
 /** Todas las tallas conocidas, para saber si una talla capturada es a la medida. */
