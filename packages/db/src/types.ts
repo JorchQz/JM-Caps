@@ -85,9 +85,31 @@ export type Database = {
         }
         Relationships: []
       }
+      precios_proveedor: {
+        Row: {
+          actualizado_en: string
+          categoria: Database['public']['Enums']['categoria_cachucha']
+          notas: string | null
+          precio_usd: number | null
+        }
+        Insert: {
+          actualizado_en?: string
+          categoria: Database['public']['Enums']['categoria_cachucha']
+          notas?: string | null
+          precio_usd?: number | null
+        }
+        Update: {
+          actualizado_en?: string
+          categoria?: Database['public']['Enums']['categoria_cachucha']
+          notas?: string | null
+          precio_usd?: number | null
+        }
+        Relationships: []
+      }
       pedido_lineas: {
         Row: {
           cantidad: number
+          categoria: Database['public']['Enums']['categoria_cachucha'] | null
           created_at: string
           estado: Database['public']['Enums']['estado_linea_pedido']
           id: string
@@ -96,11 +118,13 @@ export type Database = {
           modelo_id: string | null
           nota: string | null
           orden: number
+          precio_usd_unitario: number | null
           talla: string | null
           unidades_creadas: number
         }
         Insert: {
           cantidad?: number
+          categoria?: Database['public']['Enums']['categoria_cachucha'] | null
           created_at?: string
           estado?: Database['public']['Enums']['estado_linea_pedido']
           id?: string
@@ -109,11 +133,13 @@ export type Database = {
           modelo_id?: string | null
           nota?: string | null
           orden?: number
+          precio_usd_unitario?: number | null
           talla?: string | null
           unidades_creadas?: number
         }
         Update: {
           cantidad?: number
+          categoria?: Database['public']['Enums']['categoria_cachucha'] | null
           created_at?: string
           estado?: Database['public']['Enums']['estado_linea_pedido']
           id?: string
@@ -122,6 +148,7 @@ export type Database = {
           modelo_id?: string | null
           nota?: string | null
           orden?: number
+          precio_usd_unitario?: number | null
           talla?: string | null
           unidades_creadas?: number
         }
@@ -364,7 +391,12 @@ export type Database = {
       }
       confirmar_pedido: {
         Args: { p_lote_id: string }
-        Returns: Array<{ confirmadas: number; descartadas: number; piezas: number }>
+        Returns: Array<{
+          confirmadas: number
+          descartadas: number
+          piezas: number
+          total_usd: number
+        }>
       }
       crear_modelo: {
         Args: {

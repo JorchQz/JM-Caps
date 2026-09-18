@@ -68,7 +68,7 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 
 ## Flujo de alta de mercancía (se captura al pedir, no al recibir)
 
-1. Se **arma el pedido** en estado `borrador`: solo link de Yupoo, talla y cantidad de cada artículo, que es lo que el proveedor necesita para cotizar. Se le manda por WhatsApp como PDF con links clicables o como texto. Casi siempre contesta que algo ya no hay: se marca esa línea como no disponible y se ajustan cantidades.
+1. Se **arma el pedido** en estado `borrador`: link de Yupoo, tipo de gorra, talla y cantidad de cada artículo, que es lo que el proveedor necesita para cotizar. El panel va sumando el costo en dólares con los precios de `precios_proveedor` y lo convierte a pesos con el tipo de cambio que se capture, siempre como aproximado: el costo real en pesos depende del tipo de cambio del día del pago. Se le manda por WhatsApp como PDF con links clicables o como texto. Casi siempre contesta que algo ya no hay: se marca esa línea como no disponible y se ajustan cantidades.
 2. Cuando el proveedor confirma, el pedido pasa a `pedido` y **recién entonces** se capturan los productos: tipo de gorra, nombre, equipo (si aplica), color, descripción breve y precio. El panel lista las líneas que faltan por capturar, con su link ya resuelto. Las unidades quedan en estado `pedido`, así que **no aparecen en el catálogo público** pero sí se sabe qué viene en camino.
 3. Cuando llega la caja a Tepatitlán se abre la **recepción del lote**: el panel lista lo que se esperaba y se confirma cuántas piezas llegaron realmente de cada modelo y talla. Solo lo confirmado pasa a `disponible`.
 4. Lo que no llegó se queda en estado `pedido` como reclamo abierto al proveedor — nunca se da por recibido automáticamente, porque eso pondría a la venta stock inexistente.
@@ -99,7 +99,10 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 - `id` (uuid, pk), `fecha_pedido` (date), `fecha_recepcion` (date), `tipo_cambio_dia` (numeric), `total_usd` (numeric), `costo_envio_mxn` (numeric — para prorratear entre unidades), `estado` (enum: borrador/pedido/en_transito/recibido)
 
 **`pedido_lineas`** — el borrador de lo que se le pide al proveedor. No es inventario: el inventario nace al confirmar.
-- `id` (uuid, pk), `lote_id` (fk), `link_yupoo` (text), `talla` (text), `cantidad` (int), `estado` (enum: solicitada/confirmada/no_disponible), `nota` (text — para el proveedor), `modelo_id` (fk, se resuelve solo si el link ya existe), `unidades_creadas` (int — avance de captura), `orden` (int)
+- `id` (uuid, pk), `lote_id` (fk), `link_yupoo` (text), `categoria` (enum — define el precio de compra), `talla` (text), `cantidad` (int), `precio_usd_unitario` (numeric, null — solo si el proveedor cotizó distinto esa pieza), `estado` (enum: solicitada/confirmada/no_disponible), `nota` (text — para el proveedor), `modelo_id` (fk, se resuelve solo si el link ya existe), `unidades_creadas` (int — avance de captura), `orden` (int)
+
+**`precios_proveedor`** — lo que cuesta cada tipo de gorra, en dólares. Un renglón por categoría, porque así cotiza el proveedor. Se editan desde el pedido cuando él los cambia.
+- `categoria` (enum, pk), `precio_usd` (numeric, null mientras el proveedor no lo pase), `actualizado_en` (timestamptz), `notas` (text)
 
 **`ventas`** — encabezado de cada venta
 - `id` (uuid, pk), `fecha`, `total_mxn`, `metodo_pago` (enum: efectivo/spei/otro), `canal` (enum: local_colotlan/local_tepatitlan/envio_nacional), `cliente_nombre`, `cliente_telefono`
@@ -132,7 +135,7 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 
 ### Seguridad (RLS)
 
-- RLS activo en las 7 tablas.
+- RLS activo en las 8 tablas.
 - El público (`anon`) solo puede: leer `catalogo_publico`, leer columnas seguras de `modelos`/`unidades` (sin costos ni datos de apartado) filtradas por `activo`/`disponible`, y ejecutar `apartar_unidad()`.
 - Cualquier usuario autenticado (el admin) tiene acceso completo a todo, vía políticas `admin_full_access`. El usuario admin se crea manualmente en Authentication → Users del dashboard de Supabase.
 - Bucket de Storage `fotos-productos`: lectura pública, solo un usuario autenticado puede subir/editar/borrar.

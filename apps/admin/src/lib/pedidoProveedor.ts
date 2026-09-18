@@ -16,7 +16,10 @@ function nombreLinea(linea: LineaConModelo, indice: number): string {
 
 function detalleLinea(linea: LineaConModelo): string {
   const talla = linea.talla ? `talla ${linea.talla}` : 'ajustable'
-  return `${linea.cantidad} pz · ${talla}`
+  // El tipo de gorra va en el pedido porque es el código con el que el
+  // proveedor organiza su catálogo y cotiza.
+  const tipo = linea.categoria ? `${linea.categoria} · ` : ''
+  return `${tipo}${linea.cantidad} pz · ${talla}`
 }
 
 /**

@@ -17,6 +17,7 @@ export const llaves = {
   lote: (id: string) => ['lote', id] as const,
   unidadesDeLote: (id: string) => ['unidades-lote', id] as const,
   lineasDePedido: (id: string) => ['lineas-pedido', id] as const,
+  preciosProveedor: ['precios-proveedor'] as const,
   apartados: ['apartados'] as const,
   ventas: ['ventas'] as const,
 }
@@ -408,12 +409,15 @@ export type DatosLinea = {
   link_yupoo: string
   talla: string | null
   cantidad: number
+  categoria: Categoria | null
+  precio_usd_unitario: number | null
   nota: string | null
 }
 
 /**
  * Agrega una línea al borrador. Si el link ya existe en el catálogo se amarra
- * al modelo: al capturar después no hay que volver a escribir características.
+ * al modelo: al capturar después no hay que volver a escribir características,
+ * y la categoría del modelo sirve para costear sin que haya que elegirla.
  */
 export async function agregarLinea(datos: DatosLinea): Promise<LineaPedido> {
   const link = normalizarLinkYupoo(datos.link_yupoo)
@@ -426,6 +430,8 @@ export async function agregarLinea(datos: DatosLinea): Promise<LineaPedido> {
       link_yupoo: link,
       talla: datos.talla,
       cantidad: datos.cantidad,
+      categoria: datos.categoria ?? modelo?.categoria ?? null,
+      precio_usd_unitario: datos.precio_usd_unitario,
       nota: datos.nota,
       modelo_id: modelo?.id ?? null,
     })
@@ -455,13 +461,39 @@ export type ResultadoConfirmacion = {
   confirmadas: number
   descartadas: number
   piezas: number
+  total_usd: number
+}
+
+// ---------------------------------------------------------------------------
+// Precios del proveedor
+// ---------------------------------------------------------------------------
+
+export type PrecioProveedor = Tables<'precios_proveedor'>
+
+/** Lo que cuesta cada tipo de gorra con el proveedor, en dólares. */
+export async function cargarPreciosProveedor(): Promise<PrecioProveedor[]> {
+  const { data, error } = await supabase.from('precios_proveedor').select('*')
+  if (error) fallar('No se pudieron cargar los precios del proveedor', error)
+  return data ?? []
+}
+
+export async function actualizarPrecioProveedor(
+  categoria: Categoria,
+  precioUsd: number | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('precios_proveedor')
+    .update({ precio_usd: precioUsd, actualizado_en: new Date().toISOString() })
+    .eq('categoria', categoria)
+
+  if (error) fallar('No se pudo guardar el precio', error)
 }
 
 /** Cierra el borrador: el lote pasa a pedido y ya se pueden capturar productos. */
 export async function confirmarPedido(loteId: string): Promise<ResultadoConfirmacion> {
   const { data, error } = await supabase.rpc('confirmar_pedido', { p_lote_id: loteId })
   if (error) fallar('No se pudo confirmar el pedido', error)
-  return data?.[0] ?? { confirmadas: 0, descartadas: 0, piezas: 0 }
+  return data?.[0] ?? { confirmadas: 0, descartadas: 0, piezas: 0, total_usd: 0 }
 }
 
 // ---------------------------------------------------------------------------
