@@ -1,0 +1,16 @@
+{
+  "name": "jm-caps",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @jm-caps/admin",
+    "build": "npm run build --workspace @jm-caps/admin",
+    "typecheck": "npm run typecheck --workspace @jm-caps/admin",
+    "gen:types": "npx supabase gen types typescript --project-id ndsnftmzmjsxxjdlwozk > packages/db/src/types.ts"
+  }
+}

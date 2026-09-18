@@ -1,0 +1,351 @@
+// Generado desde Supabase (proyecto ndsnftmzmjsxxjdlwozk).
+// Para regenerar: npm run gen:types
+// No editar a mano.
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  __InternalSupabase: {
+    PostgrestVersion: '14.5'
+  }
+  public: {
+    Tables: {
+      catalogo_proveedor: {
+        Row: {
+          activo: boolean
+          categoria: Database['public']['Enums']['categoria_cachucha'] | null
+          codigo_supplier: string
+          created_at: string
+          fecha_revisado: string | null
+          id: string
+          link_yupoo: string
+          notas: string | null
+        }
+        Insert: {
+          activo?: boolean
+          categoria?: Database['public']['Enums']['categoria_cachucha'] | null
+          codigo_supplier: string
+          created_at?: string
+          fecha_revisado?: string | null
+          id?: string
+          link_yupoo: string
+          notas?: string | null
+        }
+        Update: {
+          activo?: boolean
+          categoria?: Database['public']['Enums']['categoria_cachucha'] | null
+          codigo_supplier?: string
+          created_at?: string
+          fecha_revisado?: string | null
+          id?: string
+          link_yupoo?: string
+          notas?: string | null
+        }
+        Relationships: []
+      }
+      lotes: {
+        Row: {
+          costo_envio_mxn: number
+          created_at: string
+          estado: Database['public']['Enums']['estado_lote']
+          fecha_pedido: string
+          fecha_recepcion: string | null
+          id: string
+          notas: string | null
+          tipo_cambio_dia: number | null
+          total_usd: number | null
+        }
+        Insert: {
+          costo_envio_mxn?: number
+          created_at?: string
+          estado?: Database['public']['Enums']['estado_lote']
+          fecha_pedido?: string
+          fecha_recepcion?: string | null
+          id?: string
+          notas?: string | null
+          tipo_cambio_dia?: number | null
+          total_usd?: number | null
+        }
+        Update: {
+          costo_envio_mxn?: number
+          created_at?: string
+          estado?: Database['public']['Enums']['estado_lote']
+          fecha_pedido?: string
+          fecha_recepcion?: string | null
+          id?: string
+          notas?: string | null
+          tipo_cambio_dia?: number | null
+          total_usd?: number | null
+        }
+        Relationships: []
+      }
+      modelos: {
+        Row: {
+          activo: boolean
+          categoria: Database['public']['Enums']['categoria_cachucha']
+          codigo: string
+          color: string | null
+          created_at: string
+          foto_url: string | null
+          id: string
+          link_yupoo: string | null
+          nombre: string
+          precio_venta_mxn: number
+        }
+        Insert: {
+          activo?: boolean
+          categoria: Database['public']['Enums']['categoria_cachucha']
+          codigo: string
+          color?: string | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          link_yupoo?: string | null
+          nombre: string
+          precio_venta_mxn: number
+        }
+        Update: {
+          activo?: boolean
+          categoria?: Database['public']['Enums']['categoria_cachucha']
+          codigo?: string
+          color?: string | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          link_yupoo?: string | null
+          nombre?: string
+          precio_venta_mxn?: number
+        }
+        Relationships: []
+      }
+      unidades: {
+        Row: {
+          apartado_hasta: string | null
+          apartado_nombre: string | null
+          apartado_telefono: string | null
+          costo_unitario_mxn: number | null
+          created_at: string
+          estado: Database['public']['Enums']['estado_unidad']
+          fecha_alta: string | null
+          fecha_venta: string | null
+          foto_real_url: string | null
+          id: string
+          lote_id: string | null
+          modelo_id: string
+          talla: string | null
+          updated_at: string
+        }
+        Insert: {
+          apartado_hasta?: string | null
+          apartado_nombre?: string | null
+          apartado_telefono?: string | null
+          costo_unitario_mxn?: number | null
+          created_at?: string
+          estado?: Database['public']['Enums']['estado_unidad']
+          fecha_alta?: string | null
+          fecha_venta?: string | null
+          foto_real_url?: string | null
+          id?: string
+          lote_id?: string | null
+          modelo_id: string
+          talla?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apartado_hasta?: string | null
+          apartado_nombre?: string | null
+          apartado_telefono?: string | null
+          costo_unitario_mxn?: number | null
+          created_at?: string
+          estado?: Database['public']['Enums']['estado_unidad']
+          fecha_alta?: string | null
+          fecha_venta?: string | null
+          foto_real_url?: string | null
+          id?: string
+          lote_id?: string | null
+          modelo_id?: string
+          talla?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'unidades_lote_id_fkey'
+            columns: ['lote_id']
+            isOneToOne: false
+            referencedRelation: 'lotes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'unidades_modelo_id_fkey'
+            columns: ['modelo_id']
+            isOneToOne: false
+            referencedRelation: 'modelos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      venta_items: {
+        Row: {
+          id: string
+          precio_mxn: number
+          unidad_id: string
+          venta_id: string
+        }
+        Insert: {
+          id?: string
+          precio_mxn: number
+          unidad_id: string
+          venta_id: string
+        }
+        Update: {
+          id?: string
+          precio_mxn?: number
+          unidad_id?: string
+          venta_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'venta_items_unidad_id_fkey'
+            columns: ['unidad_id']
+            isOneToOne: true
+            referencedRelation: 'unidades'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'venta_items_venta_id_fkey'
+            columns: ['venta_id']
+            isOneToOne: false
+            referencedRelation: 'ventas'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      ventas: {
+        Row: {
+          canal: Database['public']['Enums']['canal_venta']
+          cliente_nombre: string | null
+          cliente_telefono: string | null
+          fecha: string
+          id: string
+          metodo_pago: Database['public']['Enums']['metodo_pago']
+          notas: string | null
+          total_mxn: number
+        }
+        Insert: {
+          canal: Database['public']['Enums']['canal_venta']
+          cliente_nombre?: string | null
+          cliente_telefono?: string | null
+          fecha?: string
+          id?: string
+          metodo_pago: Database['public']['Enums']['metodo_pago']
+          notas?: string | null
+          total_mxn: number
+        }
+        Update: {
+          canal?: Database['public']['Enums']['canal_venta']
+          cliente_nombre?: string | null
+          cliente_telefono?: string | null
+          fecha?: string
+          id?: string
+          metodo_pago?: Database['public']['Enums']['metodo_pago']
+          notas?: string | null
+          total_mxn?: number
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      catalogo_publico: {
+        Row: {
+          categoria: Database['public']['Enums']['categoria_cachucha'] | null
+          codigo: string | null
+          color: string | null
+          foto_url: string | null
+          modelo_id: string | null
+          nombre: string | null
+          precio_venta_mxn: number | null
+          stock_disponible: number | null
+          tallas_disponibles: string[] | null
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      apartar_unidad: {
+        Args: {
+          p_modelo_id: string
+          p_nombre: string
+          p_talla: string
+          p_telefono: string
+        }
+        Returns: string
+      }
+      agregar_unidades: {
+        Args: {
+          p_cantidad: number
+          p_costo_unitario_mxn: number | null
+          p_lote_id: string | null
+          p_modelo_id: string
+          p_talla: string | null
+        }
+        Returns: string[]
+      }
+      crear_modelo: {
+        Args: {
+          p_categoria: Database['public']['Enums']['categoria_cachucha']
+          p_color: string | null
+          p_foto_url: string | null
+          p_link_yupoo: string
+          p_nombre: string
+          p_precio_venta_mxn: number
+        }
+        Returns: Database['public']['Tables']['modelos']['Row']
+      }
+      registrar_venta: {
+        Args: {
+          p_canal: Database['public']['Enums']['canal_venta']
+          p_cliente_nombre: string | null
+          p_cliente_telefono: string | null
+          p_metodo_pago: Database['public']['Enums']['metodo_pago']
+          p_notas: string | null
+          p_unidad_ids: string[]
+        }
+        Returns: string
+      }
+    }
+    Enums: {
+      canal_venta: 'local_colotlan' | 'local_tepatitlan' | 'envio_nacional'
+      categoria_cachucha: 'AA' | 'AAS' | 'UU' | 'UUS' | 'K' | 'DH'
+      estado_lote: 'pedido' | 'en_transito' | 'recibido'
+      estado_unidad:
+        | 'pedido'
+        | 'en_transito'
+        | 'disponible'
+        | 'apartada'
+        | 'vendida'
+      metodo_pago: 'efectivo' | 'spei' | 'otro'
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DefaultSchema = Database['public']
+
+export type Tables<T extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])> =
+  (DefaultSchema['Tables'] & DefaultSchema['Views'])[T] extends { Row: infer R } ? R : never
+
+export type TablesInsert<T extends keyof DefaultSchema['Tables']> =
+  DefaultSchema['Tables'][T] extends { Insert: infer I } ? I : never
+
+export type TablesUpdate<T extends keyof DefaultSchema['Tables']> =
+  DefaultSchema['Tables'][T] extends { Update: infer U } ? U : never
+
+export type Enums<T extends keyof DefaultSchema['Enums']> = DefaultSchema['Enums'][T]
