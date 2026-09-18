@@ -31,7 +31,7 @@ JM Caps es una tienda de gorras (cachuchas) en Colotlán, Jalisco, México, oper
 | AAS | Estilo New Era snapback: ajustables con broche — mismo precio que AA |
 | UU | Calidad 1:1, fitted (mejores materiales, más cara) — pausado por ahora, rotación lenta al inicio |
 | UUS | Calidad 1:1, snapback — pausado por ahora |
-| K | Niños |
+| K | Niños: llevan talla, en su propia escala más chica que la de adulto |
 | DH | Estilo Dandy Hats / streetwear urbano, ajustables — sin logos de ligas deportivas, menor riesgo legal, mejor margen |
 
 **Descontinuados** (no se vuelven a comprar): DE (diseños especiales) y JS (Jon Stan) — nunca se vendieron bien.

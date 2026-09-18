@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CATEGORIAS,
   ESTADOS_LOTE,
-  TALLAS_FITTED,
   esLinkYupooValido,
   formatearMXN,
   normalizarLinkYupoo,
@@ -23,6 +22,7 @@ import {
   type Modelo,
 } from '../lib/consultas'
 import { Aviso, Campo, EncabezadoPagina, MensajeError } from '../components/ui'
+import { SelectorTalla } from '../components/SelectorTalla'
 
 type Paso =
   | { tipo: 'buscar' }
@@ -460,8 +460,7 @@ function FormularioUnidades({
   // Si viene de una linea del pedido, talla y cantidad ya se acordaron con el
   // proveedor: se precargan para no recapturar lo que ya esta decidido.
   const faltantes = linea ? Math.max(1, linea.cantidad - linea.unidades_creadas) : 1
-  const [ajustable, setAjustable] = useState(linea ? linea.talla === null : !info.usaTalla)
-  const [talla, setTalla] = useState<string>(linea?.talla ?? (info.usaTalla ? '7 1/4' : ''))
+  const [talla, setTalla] = useState<string | null>(linea ? linea.talla : info.tallaSugerida)
   const [cantidad, setCantidad] = useState(String(faltantes))
   const [costo, setCosto] = useState('')
 
@@ -470,7 +469,7 @@ function FormularioUnidades({
       agregarUnidades({
         modelo_id: modelo.id,
         cantidad: Number(cantidad),
-        talla: ajustable ? null : talla,
+        talla: talla?.trim() ? talla.trim() : null,
         lote_id: loteId || null,
         costo_unitario_mxn: costo ? Number(costo) : null,
         linea_id: linea?.id ?? null,
@@ -480,7 +479,7 @@ function FormularioUnidades({
       void clienteQuery.invalidateQueries({ queryKey: llaves.lotes })
       if (loteId) void clienteQuery.invalidateQueries({ queryKey: llaves.lineasDePedido(loteId) })
       void clienteQuery.invalidateQueries({ queryKey: llaves.unidadesDeModelo(modelo.id) })
-      const descripcion = ajustable ? 'ajustable' : `talla ${talla}`
+      const descripcion = talla?.trim() ? `talla ${talla.trim()}` : 'ajustable'
       alTerminar(
         `Se registraron ${ids.length} pieza(s) de ${modelo.nombre} (${descripcion}). Pega el siguiente link para continuar con el pedido.`,
       )
@@ -497,26 +496,11 @@ function FormularioUnidades({
       <h3 style={{ marginBottom: 10 }}>Piezas de este pedido</h3>
 
       <div className="rejilla">
-        <Campo etiqueta="Talla" ayuda={info.usaTalla ? undefined : 'Esta categoría es ajustable.'}>
-          <select
-            value={ajustable ? 'ajustable' : talla}
-            onChange={(evento) => {
-              const valor = evento.target.value
-              if (valor === 'ajustable') {
-                setAjustable(true)
-              } else {
-                setAjustable(false)
-                setTalla(valor)
-              }
-            }}
-          >
-            <option value="ajustable">Ajustable (sin talla)</option>
-            {TALLAS_FITTED.map((valor) => (
-              <option key={valor} value={valor}>
-                {valor}
-              </option>
-            ))}
-          </select>
+        <Campo
+          etiqueta="Talla"
+          ayuda={info.usaTalla ? undefined : 'Esta categoría normalmente es ajustable.'}
+        >
+          <SelectorTalla valor={talla} alCambiar={setTalla} />
         </Campo>
 
         <Campo etiqueta="Cantidad" ayuda="Una fila por gorra física, cada una con su propio código.">

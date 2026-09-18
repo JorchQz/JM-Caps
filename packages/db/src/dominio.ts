@@ -13,6 +13,8 @@ type InfoCategoria = {
   precioSugerido: number
   /** Si es false, la categoría es ajustable y las unidades se dan de alta sin talla. */
   usaTalla: boolean
+  /** Talla que trae precargada el alta. Null en las categorías ajustables. */
+  tallaSugerida: string | null
   /** Categorías pausadas: se siguen mostrando pero no se sugieren para compra nueva. */
   pausada: boolean
 }
@@ -23,6 +25,7 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
     etiqueta: 'AA - estilo New Era fitted, cerrada con talla',
     precioSugerido: 419,
     usaTalla: true,
+    tallaSugerida: '7 1/4',
     pausada: false,
   },
   AAS: {
@@ -30,6 +33,7 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
     etiqueta: 'AAS - estilo New Era snapback, ajustable con broche',
     precioSugerido: 419,
     usaTalla: false,
+    tallaSugerida: null,
     pausada: false,
   },
   UU: {
@@ -37,6 +41,7 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
     etiqueta: 'UU - calidad 1:1, fitted con talla',
     precioSugerido: 699,
     usaTalla: true,
+    tallaSugerida: '7 1/4',
     pausada: true,
   },
   UUS: {
@@ -44,21 +49,30 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
     etiqueta: 'UUS - calidad 1:1, snapback ajustable',
     precioSugerido: 699,
     usaTalla: false,
+    tallaSugerida: null,
     pausada: true,
   },
-  K: { codigo: 'K', etiqueta: 'K - niños, ajustable', precioSugerido: 399, usaTalla: false, pausada: false },
+  K: {
+    codigo: 'K',
+    etiqueta: 'K - niños, con talla',
+    precioSugerido: 399,
+    usaTalla: true,
+    tallaSugerida: '6 1/2',
+    pausada: false,
+  },
   DH: {
     codigo: 'DH',
     etiqueta: 'DH - streetwear, ajustable',
     precioSugerido: 799,
     usaTalla: false,
+    tallaSugerida: null,
     pausada: false,
   },
 }
 
 export const CATEGORIAS_LISTA: InfoCategoria[] = Object.values(CATEGORIAS)
 
-/** Tallas fitted del proveedor, en el orden en que se muestran. */
+/** Tallas fitted de adulto, en el orden en que se muestran. */
 export const TALLAS_FITTED = [
   '6 7/8',
   '7',
@@ -69,6 +83,15 @@ export const TALLAS_FITTED = [
   '7 5/8',
   '7 3/4',
 ] as const
+
+/**
+ * Tallas de niño (categoría K). Son más chicas que cualquier talla de adulto,
+ * por eso van en su propia lista y no como extensión de la anterior.
+ */
+export const TALLAS_NINO = ['6', '6 1/8', '6 1/4', '6 3/8', '6 1/2', '6 5/8', '6 3/4'] as const
+
+/** Todas las tallas conocidas, para validar si una talla capturada es a la medida. */
+export const TALLAS_CONOCIDAS: readonly string[] = [...TALLAS_FITTED, ...TALLAS_NINO]
 
 export const ESTADOS_UNIDAD: Record<EstadoUnidad, string> = {
   pedido: 'Pedida',

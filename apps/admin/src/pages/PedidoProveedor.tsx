@@ -5,7 +5,6 @@ import {
   ESTADOS_LINEA,
   ESTADOS_LOTE,
   MINIMO_PIEZAS_PEDIDO,
-  TALLAS_FITTED,
   esLinkYupooValido,
   type EstadoLineaPedido,
 } from '@jm-caps/db'
@@ -21,6 +20,7 @@ import {
   type ResultadoConfirmacion,
 } from '../lib/consultas'
 import { descargarPdfPedido, textoPedido } from '../lib/pedidoProveedor'
+import { SelectorTalla } from '../components/SelectorTalla'
 import {
   Aviso,
   Campo,
@@ -329,7 +329,7 @@ function FilaLinea({
 
 function NuevaLinea({ loteId, alAgregar }: { loteId: string; alAgregar: () => void }) {
   const [link, setLink] = useState('')
-  const [talla, setTalla] = useState('ajustable')
+  const [talla, setTalla] = useState<string | null>(null)
   const [cantidad, setCantidad] = useState('1')
   const [nota, setNota] = useState('')
 
@@ -338,7 +338,7 @@ function NuevaLinea({ loteId, alAgregar }: { loteId: string; alAgregar: () => vo
       agregarLinea({
         lote_id: loteId,
         link_yupoo: link,
-        talla: talla === 'ajustable' ? null : talla,
+        talla: talla?.trim() ? talla.trim() : null,
         cantidad: Number(cantidad),
         nota: nota.trim() || null,
       }),
@@ -379,14 +379,7 @@ function NuevaLinea({ loteId, alAgregar }: { loteId: string; alAgregar: () => vo
 
         <div className="rejilla">
           <Campo etiqueta="Talla">
-            <select value={talla} onChange={(evento) => setTalla(evento.target.value)}>
-              <option value="ajustable">Ajustable (sin talla)</option>
-              {TALLAS_FITTED.map((valor) => (
-                <option key={valor} value={valor}>
-                  {valor}
-                </option>
-              ))}
-            </select>
+            <SelectorTalla valor={talla} alCambiar={setTalla} />
           </Campo>
 
           <Campo etiqueta="Piezas">
