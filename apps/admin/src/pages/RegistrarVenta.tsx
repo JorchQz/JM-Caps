@@ -16,6 +16,7 @@ import {
 } from '../lib/consultas'
 import { Aviso, Campo, Cargando, EncabezadoPagina, MensajeError, Vacio } from '../components/ui'
 import { EscanerQR } from '../components/EscanerQR'
+import { usePersistente } from '../lib/persistencia'
 
 export function RegistrarVenta() {
   const clienteQuery = useQueryClient()
@@ -24,7 +25,10 @@ export function RegistrarVenta() {
   const [busqueda, setBusqueda] = useState('')
   const [escaneando, setEscaneando] = useState(false)
   const [avisoEscaneo, setAvisoEscaneo] = useState<string | null>(null)
-  const [carrito, setCarrito] = useState<UnidadConModelo[]>([])
+  const [foliosCarrito, setFoliosCarrito, limpiarCarrito] = usePersistente<string[]>(
+    'venta:carrito',
+    [],
+  )
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('efectivo')
   const [canal, setCanal] = useState<CanalVenta>('local_colotlan')
   const [nombre, setNombre] = useState('')
@@ -33,6 +37,19 @@ export function RegistrarVenta() {
   const [ultimaVenta, setUltimaVenta] = useState<{ total: number; piezas: number } | null>(null)
 
   const vendibles = useQuery({ queryKey: ['vendibles'], queryFn: unidadesVendibles })
+
+  // El carrito se reconstruye contra lo que la base dice ahora mismo: si una
+  // pieza guardada ya se vendió por otro lado, sale sola en vez de cobrarse dos
+  // veces. Los folios que ya no existen se descartan al registrar la venta.
+  const carrito = useMemo(
+    () =>
+      foliosCarrito
+        .map((folio) => (vendibles.data ?? []).find((unidad) => unidad.folio === folio))
+        .filter((unidad): unidad is UnidadConModelo => Boolean(unidad)),
+    [foliosCarrito, vendibles.data],
+  )
+
+  const perdidas = vendibles.data ? foliosCarrito.length - carrito.length : 0
 
   const enCarrito = useMemo(() => new Set(carrito.map((unidad) => unidad.id)), [carrito])
 
@@ -55,15 +72,17 @@ export function RegistrarVenta() {
   const total = carrito.reduce((suma, unidad) => suma + unidad.modelo.precio_venta_mxn, 0)
 
   function agregar(unidad: UnidadConModelo) {
-    setCarrito((previo) => (previo.some((x) => x.id === unidad.id) ? previo : [...previo, unidad]))
+    setFoliosCarrito((previo) =>
+      previo.includes(unidad.folio) ? previo : [...previo, unidad.folio],
+    )
     setBusqueda('')
     // Con la cámara abierta, enfocar el campo levantaría el teclado encima del
     // visor justo cuando se está apuntando a la siguiente gorra.
     if (!escaneando) campoBusqueda.current?.focus()
   }
 
-  function quitar(id: string) {
-    setCarrito((previo) => previo.filter((unidad) => unidad.id !== id))
+  function quitar(folio: string) {
+    setFoliosCarrito((previo) => previo.filter((valor) => valor !== folio))
   }
 
   /** El lector de códigos escribe el id completo y manda Enter. */
@@ -92,7 +111,7 @@ export function RegistrarVenta() {
       }),
     onSuccess: () => {
       setUltimaVenta({ total, piezas: carrito.length })
-      setCarrito([])
+      limpiarCarrito()
       setNombre('')
       setTelefono('')
       setNotas('')
@@ -229,7 +248,7 @@ export function RegistrarVenta() {
                     </td>
                     <td className="numero">{formatearMXN(unidad.modelo.precio_venta_mxn)}</td>
                     <td style={{ textAlign: 'right' }}>
-                      <button type="button" className="discreto" onClick={() => quitar(unidad.id)}>
+                      <button type="button" className="discreto" onClick={() => quitar(unidad.folio)}>
                         Quitar
                       </button>
                     </td>
@@ -252,6 +271,13 @@ export function RegistrarVenta() {
         {apartadasEnCarrito.length > 0 ? (
           <Aviso>
             {apartadasEnCarrito.length} pieza(s) están apartadas. Al cobrar se cierra ese apartado.
+          </Aviso>
+        ) : null}
+
+        {perdidas > 0 ? (
+          <Aviso>
+            {perdidas} pieza(s) que tenías en esta venta ya no están disponibles y salieron del
+            carrito. Revisa que no se hayan vendido antes de cobrar.
           </Aviso>
         ) : null}
       </div>

@@ -23,6 +23,7 @@ import {
 } from '../lib/consultas'
 import { Aviso, Campo, EncabezadoPagina, MensajeError } from '../components/ui'
 import { SelectorTalla } from '../components/SelectorTalla'
+import { usePersistente } from '../lib/persistencia'
 
 type Paso =
   | { tipo: 'buscar' }
@@ -290,12 +291,26 @@ function ModeloNuevo({
   linea: LineaConModelo | null
   alTerminar: (mensaje: string) => void
 }) {
-  const [categoria, setCategoria] = useState<Categoria>('AA')
-  const [nombre, setNombre] = useState('')
-  const [equipo, setEquipo] = useState('')
-  const [color, setColor] = useState('')
-  const [descripcion, setDescripcion] = useState('')
-  const [precio, setPrecio] = useState(String(CATEGORIAS.AA.precioSugerido))
+  // El navegador del celular descarta pestañas en segundo plano: lo escrito
+  // aquí sobrevive a eso. Se guarda por link, así que cada producto conserva lo
+  // suyo aunque se salte de uno a otro y se vuelva después.
+  const [borrador, setBorrador, limpiarBorrador] = usePersistente(
+    `alta:${normalizarLinkYupoo(link)}`,
+    {
+      categoria: 'AA' as Categoria,
+      nombre: '',
+      equipo: '',
+      color: '',
+      descripcion: '',
+      precio: String(CATEGORIAS.AA.precioSugerido),
+    },
+  )
+  const { categoria, nombre, equipo, color, descripcion, precio } = borrador
+
+  function cambiar(campos: Partial<typeof borrador>) {
+    setBorrador((previo) => ({ ...previo, ...campos }))
+  }
+
   const [archivo, setArchivo] = useState<File | null>(null)
   const [modeloCreado, setModeloCreado] = useState<Modelo | null>(null)
 
@@ -313,12 +328,14 @@ function ModeloNuevo({
         foto_url: foto,
       })
     },
-    onSuccess: (modelo) => setModeloCreado(modelo),
+    onSuccess: (modelo) => {
+      limpiarBorrador()
+      setModeloCreado(modelo)
+    },
   })
 
   function cambiarCategoria(valor: Categoria) {
-    setCategoria(valor)
-    setPrecio(String(CATEGORIAS[valor].precioSugerido))
+    cambiar({ categoria: valor, precio: String(CATEGORIAS[valor].precioSugerido) })
   }
 
   if (modeloCreado) {
@@ -374,7 +391,7 @@ function ModeloNuevo({
             <input
               type="text"
               value={nombre}
-              onChange={(evento) => setNombre(evento.target.value)}
+              onChange={(evento) => cambiar({ nombre: evento.target.value })}
               required
             />
           </Campo>
@@ -383,7 +400,7 @@ function ModeloNuevo({
             <input
               type="text"
               value={equipo}
-              onChange={(evento) => setEquipo(evento.target.value)}
+              onChange={(evento) => cambiar({ equipo: evento.target.value })}
               placeholder="Yankees"
             />
           </Campo>
@@ -392,7 +409,7 @@ function ModeloNuevo({
             <input
               type="text"
               value={color}
-              onChange={(evento) => setColor(evento.target.value)}
+              onChange={(evento) => cambiar({ color: evento.target.value })}
               placeholder="Negro"
             />
           </Campo>
@@ -403,7 +420,7 @@ function ModeloNuevo({
               min="1"
               step="1"
               value={precio}
-              onChange={(evento) => setPrecio(evento.target.value)}
+              onChange={(evento) => cambiar({ precio: evento.target.value })}
               required
             />
           </Campo>
@@ -416,13 +433,13 @@ function ModeloNuevo({
           <textarea
             rows={2}
             value={descripcion}
-            onChange={(evento) => setDescripcion(evento.target.value)}
+            onChange={(evento) => cambiar({ descripcion: evento.target.value })}
           />
         </Campo>
 
         <Campo
           etiqueta="Foto del modelo"
-          ayuda="Puedes usar la del proveedor por ahora y reemplazarla con la foto real cuando tengas la pieza en mano."
+          ayuda="Lo que escribes arriba se va guardando solo; la foto es lo único que tendrías que volver a elegir si se cierra la pestaña."
         >
           <input
             type="file"
