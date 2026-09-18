@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ESTADOS_LOTE, formatearMXN, type EstadoLote } from '@jm-caps/db'
 import {
@@ -7,7 +8,6 @@ import {
   crearLote,
   llaves,
   prorratearCostos,
-  recibirLote,
   type Lote,
 } from '../lib/consultas'
 import { Aviso, Campo, Cargando, EncabezadoPagina, MensajeError, Vacio } from '../components/ui'
@@ -92,11 +92,11 @@ function FilaLote({
       ? ((lote.total_usd ?? 0) * (lote.tipo_cambio_dia ?? 0) + lote.costo_envio_mxn) / lote.unidades
       : null
 
+  // Pasar a "recibido" no es un cambio de estado suelto: exige confirmar pieza
+  // por pieza qué llegó, así que vive en su propia pantalla.
   const cambiarEstado = useMutation({
     mutationFn: (estado: EstadoLote) =>
-      estado === 'recibido'
-        ? recibirLote(lote.id, HOY())
-        : actualizarLote(lote.id, { estado, fecha_recepcion: null }),
+      actualizarLote(lote.id, { estado, fecha_recepcion: null }),
     onSuccess: alCambiar,
   })
 
@@ -124,17 +124,18 @@ function FilaLote({
         ) : null}
       </td>
       <td>
-        <select
-          value={lote.estado}
-          disabled={cambiarEstado.isPending}
-          onChange={(evento) => cambiarEstado.mutate(evento.target.value as EstadoLote)}
-        >
-          {Object.entries(ESTADOS_LOTE).map(([valor, texto]) => (
-            <option key={valor} value={valor}>
-              {texto}
-            </option>
-          ))}
-        </select>
+        {lote.estado === 'recibido' ? (
+          <span className="insignia disponible">{ESTADOS_LOTE.recibido}</span>
+        ) : (
+          <select
+            value={lote.estado}
+            disabled={cambiarEstado.isPending}
+            onChange={(evento) => cambiarEstado.mutate(evento.target.value as EstadoLote)}
+          >
+            <option value="pedido">{ESTADOS_LOTE.pedido}</option>
+            <option value="en_transito">{ESTADOS_LOTE.en_transito}</option>
+          </select>
+        )}
       </td>
       <td className="numero">{lote.unidades}</td>
       <td className="numero">{lote.total_usd ?? '-'}</td>
@@ -142,6 +143,11 @@ function FilaLote({
       <td className="numero">{formatearMXN(lote.costo_envio_mxn)}</td>
       <td className="numero">{costoEstimado === null ? '-' : formatearMXN(costoEstimado)}</td>
       <td>
+        <Link to={`/lotes/${lote.id}/recibir`}>
+          <button type="button" className={lote.estado === 'recibido' ? 'discreto' : 'principal'}>
+            {lote.estado === 'recibido' ? 'Ver recepción' : 'Recibir'}
+          </button>
+        </Link>
         <button
           type="button"
           className="discreto"

@@ -3,7 +3,7 @@ import { useSesion } from '../lib/auth'
 
 const SECCIONES = [
   { ruta: '/', texto: 'Inventario', exacta: true },
-  { ruta: '/recibir', texto: 'Recibir mercancía' },
+  { ruta: '/productos', texto: 'Registrar productos' },
   { ruta: '/venta', texto: 'Registrar venta' },
   { ruta: '/apartados', texto: 'Apartados' },
   { ruta: '/lotes', texto: 'Lotes' },

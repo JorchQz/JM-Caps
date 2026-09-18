@@ -93,7 +93,7 @@ export function ModeloDetalle() {
         }`}
         acciones={
           <>
-            <Link to="/recibir">
+            <Link to="/productos">
               <button type="button">Agregar piezas</button>
             </Link>
             <button
@@ -254,11 +254,23 @@ function FichaModelo({
   modelo,
   alGuardar,
 }: {
-  modelo: { id: string; nombre: string; color: string | null; precio_venta_mxn: number; categoria: Categoria; activo: boolean; link_yupoo: string | null }
+  modelo: {
+    id: string
+    nombre: string
+    color: string | null
+    equipo: string | null
+    descripcion: string | null
+    precio_venta_mxn: number
+    categoria: Categoria
+    activo: boolean
+    link_yupoo: string
+  }
   alGuardar: () => void
 }) {
   const [nombre, setNombre] = useState(modelo.nombre)
   const [color, setColor] = useState(modelo.color ?? '')
+  const [equipo, setEquipo] = useState(modelo.equipo ?? '')
+  const [descripcion, setDescripcion] = useState(modelo.descripcion ?? '')
   const [precio, setPrecio] = useState(String(modelo.precio_venta_mxn))
   const [activo, setActivo] = useState(modelo.activo)
 
@@ -267,6 +279,8 @@ function FichaModelo({
       actualizarModelo(modelo.id, {
         nombre: nombre.trim(),
         color: color.trim() || null,
+        equipo: equipo.trim() || null,
+        descripcion: descripcion.trim() || null,
         precio_venta_mxn: Number(precio),
         activo,
       }),
@@ -287,8 +301,20 @@ function FichaModelo({
           <input value={nombre} onChange={(evento) => setNombre(evento.target.value)} required />
         </Campo>
 
+        <Campo etiqueta="Equipo">
+          <input value={equipo} onChange={(evento) => setEquipo(evento.target.value)} />
+        </Campo>
+
         <Campo etiqueta="Color">
           <input value={color} onChange={(evento) => setColor(evento.target.value)} />
+        </Campo>
+
+        <Campo etiqueta="Descripción breve">
+          <textarea
+            rows={2}
+            value={descripcion}
+            onChange={(evento) => setDescripcion(evento.target.value)}
+          />
         </Campo>
 
         <Campo etiqueta="Precio de venta (MXN)">

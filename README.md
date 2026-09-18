@@ -57,12 +57,22 @@ servidor llega a necesitarla, se registra como secreto en Cloudflare.
 
 ## Cómo funciona el panel
 
-**Recibir mercancía** es el flujo central y arranca siempre por el link del
-álbum de Yupoo, nunca por nombre o color. Dos gorras negras del mismo equipo
-pueden ser productos distintos del proveedor; el link es lo único que las
-distingue sin ambigüedad, y por eso `modelos.link_yupoo` tiene restricción
-`UNIQUE`. Si el link ya existe, las piezas nuevas se suman a ese modelo; si no,
-se da de alta un modelo nuevo con ese link como identificador permanente.
+Los productos se capturan **desde que se hace el pedido**, no cuando llega la
+caja: con el álbum del proveedor abierto enfrente y sin prisa. Las piezas nacen
+en estado `pedido`, así que no aparecen en el catálogo público pero sí se sabe
+qué viene en camino.
+
+La alta arranca siempre por el link del álbum de Yupoo, nunca por nombre o
+color. Dos gorras negras del mismo equipo pueden ser productos distintos del
+proveedor; el link es lo único que las distingue sin ambigüedad, y por eso
+`modelos.link_yupoo` es `UNIQUE` y obligatorio. Si el link ya existe, las
+piezas nuevas se suman a ese producto sin recapturar características.
+
+Cuando llega el pedido se abre la recepción del lote y se confirma cuántas
+piezas llegaron realmente de cada modelo y talla. Solo lo confirmado pasa a
+stock; lo que falta se queda como reclamo al proveedor. El proveedor no siempre
+manda lo que se pidió, y dar el lote por recibido en bloque pondría a la venta
+gorras que no existen.
 
 Un **modelo** es el producto que ve el cliente. Una **unidad** es una gorra
 física concreta, con su talla, su costo y su estado. El identificador de la
@@ -78,6 +88,7 @@ usa el panel:
 - `crear_modelo` — alta de modelo generando el código consecutivo por categoría
 - `agregar_unidades` — alta de N piezas físicas en una sola transacción
 - `registrar_venta` — venta completa (encabezado, items y cambio de estado)
+- `recibir_lote` — recepción con verificación pieza por pieza
 
 Las ocho migraciones anteriores (tablas, RLS, vista pública, `apartar_unidad`,
 cron de expiración y bucket de fotos) están aplicadas en Supabase pero todavía

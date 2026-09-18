@@ -14,6 +14,8 @@ export const llaves = {
   modelo: (id: string) => ['modelo', id] as const,
   unidadesDeModelo: (id: string) => ['unidades', id] as const,
   lotes: ['lotes'] as const,
+  lote: (id: string) => ['lote', id] as const,
+  unidadesDeLote: (id: string) => ['unidades-lote', id] as const,
   apartados: ['apartados'] as const,
   ventas: ['ventas'] as const,
 }
@@ -64,6 +66,8 @@ export type DatosModeloNuevo = {
   categoria: Categoria
   nombre: string
   color: string | null
+  equipo: string | null
+  descripcion: string | null
   precio_venta_mxn: number
   link_yupoo: string
   foto_url: string | null
@@ -77,6 +81,8 @@ export async function crearModelo(datos: DatosModeloNuevo): Promise<Modelo> {
     p_link_yupoo: normalizarLinkYupoo(datos.link_yupoo),
     p_color: datos.color,
     p_foto_url: datos.foto_url,
+    p_equipo: datos.equipo,
+    p_descripcion: datos.descripcion,
   })
 
   if (error) fallar('No se pudo dar de alta el modelo', error)
@@ -294,24 +300,44 @@ export async function actualizarLote(id: string, cambios: Partial<Lote>): Promis
   if (error) fallar('No se pudo actualizar el lote', error)
 }
 
+export type ResultadoRecepcion = { recibidas: number; faltantes: number }
+
 /**
- * Marca el lote como recibido y pasa sus unidades en camino a disponibles,
- * que es lo que en la práctica pasa cuando llega la caja a Tepatitlán.
+ * Marca el lote como recibido y pasa a disponible solo las piezas confirmadas.
+ * Si no se pasa la lista, se da por recibido todo el lote. Lo que no llegó se
+ * queda en estado pedido: es un reclamo al proveedor, no stock vendible.
  */
-export async function recibirLote(id: string, fecha: string): Promise<void> {
-  const { error } = await supabase
-    .from('lotes')
-    .update({ estado: 'recibido', fecha_recepcion: fecha })
-    .eq('id', id)
-  if (error) fallar('No se pudo marcar el lote como recibido', error)
+export async function recibirLote(
+  id: string,
+  fecha: string,
+  unidadIds?: string[],
+): Promise<ResultadoRecepcion> {
+  const { data, error } = await supabase.rpc('recibir_lote', {
+    p_lote_id: id,
+    p_fecha: fecha,
+    p_unidad_ids: unidadIds ?? null,
+  })
 
-  const { error: errorUnidades } = await supabase
+  if (error) fallar('No se pudo recibir el lote', error)
+  return data?.[0] ?? { recibidas: 0, faltantes: 0 }
+}
+
+/** Piezas de un lote con su modelo, para la pantalla de recepción. */
+export async function unidadesDeLote(loteId: string): Promise<UnidadConModelo[]> {
+  const { data, error } = await supabase
     .from('unidades')
-    .update({ estado: 'disponible', fecha_alta: new Date().toISOString() })
-    .eq('lote_id', id)
-    .in('estado', ['pedido', 'en_transito'])
+    .select('*, modelo:modelos(*)')
+    .eq('lote_id', loteId)
+    .order('created_at', { ascending: true })
 
-  if (errorUnidades) fallar('El lote se marcó recibido pero las unidades no se liberaron', errorUnidades)
+  if (error) fallar('No se pudieron cargar las piezas del lote', error)
+  return (data as UnidadConModelo[] | null) ?? []
+}
+
+export async function obtenerLote(id: string): Promise<Lote> {
+  const { data, error } = await supabase.from('lotes').select('*').eq('id', id).single()
+  if (error) fallar('No se pudo cargar el lote', error)
+  return data
 }
 
 /**

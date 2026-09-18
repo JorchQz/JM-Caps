@@ -24,7 +24,12 @@ export function Inventario() {
       if (filtro === 'con_stock' && fila.disponibles === 0) return false
       if (filtro === 'sin_stock' && fila.disponibles > 0) return false
       if (!texto) return true
-      const campos = [fila.modelo.nombre, fila.modelo.color ?? '', fila.modelo.codigo]
+      const campos = [
+        fila.modelo.nombre,
+        fila.modelo.color ?? '',
+        fila.modelo.equipo ?? '',
+        fila.modelo.codigo,
+      ]
       return campos.some((campo) => campo.toLowerCase().includes(texto))
     })
   }, [data, busqueda, categoria, filtro])
@@ -46,9 +51,9 @@ export function Inventario() {
         titulo="Inventario"
         descripcion="Modelos dados de alta y las piezas físicas de cada uno. El catálogo público solo muestra los que tienen disponibles mayor a cero."
         acciones={
-          <Link to="/recibir">
+          <Link to="/productos">
             <button type="button" className="principal">
-              Recibir mercancía
+              Registrar productos
             </button>
           </Link>
         }
@@ -71,7 +76,7 @@ export function Inventario() {
         <div className="fila" style={{ marginBottom: 14 }}>
           <input
             type="search"
-            placeholder="Buscar por nombre, color o código"
+            placeholder="Buscar por nombre, equipo, color o código"
             value={busqueda}
             onChange={(evento) => setBusqueda(evento.target.value)}
             style={{ flex: '1 1 220px' }}
@@ -103,7 +108,7 @@ export function Inventario() {
           <Cargando />
         ) : filas.length === 0 ? (
           <Vacio>
-            No hay modelos que coincidan. Da de alta mercancía desde Recibir mercancía.
+            No hay modelos que coincidan. Captura productos desde Registrar productos.
           </Vacio>
         ) : (
           <div className="tabla-contenedor">
@@ -151,6 +156,7 @@ function FilaModelo({ fila }: { fila: FilaInventario }) {
         </Link>
         <div className="tenue" style={{ fontSize: '0.83rem' }}>
           <span className="mono">{modelo.codigo}</span>
+          {modelo.equipo ? ` · ${modelo.equipo}` : ''}
           {modelo.color ? ` · ${modelo.color}` : ''}
           {modelo.activo ? '' : ' · inactivo'}
         </div>

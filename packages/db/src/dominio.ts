@@ -18,12 +18,42 @@ type InfoCategoria = {
 }
 
 export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
-  AA: { codigo: 'AA', etiqueta: 'AA - calidad AA, fitted', precioSugerido: 419, usaTalla: true, pausada: false },
-  AAS: { codigo: 'AAS', etiqueta: 'AAS - calidad AA, snapback', precioSugerido: 419, usaTalla: false, pausada: false },
-  UU: { codigo: 'UU', etiqueta: 'UU - calidad 1:1, fitted', precioSugerido: 699, usaTalla: true, pausada: true },
-  UUS: { codigo: 'UUS', etiqueta: 'UUS - calidad 1:1, snapback', precioSugerido: 699, usaTalla: false, pausada: true },
-  K: { codigo: 'K', etiqueta: 'K - niños', precioSugerido: 399, usaTalla: false, pausada: false },
-  DH: { codigo: 'DH', etiqueta: 'DH - Dandy Hats / streetwear', precioSugerido: 799, usaTalla: false, pausada: false },
+  AA: {
+    codigo: 'AA',
+    etiqueta: 'AA - estilo New Era fitted, cerrada con talla',
+    precioSugerido: 419,
+    usaTalla: true,
+    pausada: false,
+  },
+  AAS: {
+    codigo: 'AAS',
+    etiqueta: 'AAS - estilo New Era snapback, ajustable con broche',
+    precioSugerido: 419,
+    usaTalla: false,
+    pausada: false,
+  },
+  UU: {
+    codigo: 'UU',
+    etiqueta: 'UU - calidad 1:1, fitted con talla',
+    precioSugerido: 699,
+    usaTalla: true,
+    pausada: true,
+  },
+  UUS: {
+    codigo: 'UUS',
+    etiqueta: 'UUS - calidad 1:1, snapback ajustable',
+    precioSugerido: 699,
+    usaTalla: false,
+    pausada: true,
+  },
+  K: { codigo: 'K', etiqueta: 'K - niños, ajustable', precioSugerido: 399, usaTalla: false, pausada: false },
+  DH: {
+    codigo: 'DH',
+    etiqueta: 'DH - streetwear, ajustable',
+    precioSugerido: 799,
+    usaTalla: false,
+    pausada: false,
+  },
 }
 
 export const CATEGORIAS_LISTA: InfoCategoria[] = Object.values(CATEGORIAS)

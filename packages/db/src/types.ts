@@ -92,9 +92,11 @@ export type Database = {
           codigo: string
           color: string | null
           created_at: string
+          descripcion: string | null
+          equipo: string | null
           foto_url: string | null
           id: string
-          link_yupoo: string | null
+          link_yupoo: string
           nombre: string
           precio_venta_mxn: number
         }
@@ -104,9 +106,11 @@ export type Database = {
           codigo: string
           color?: string | null
           created_at?: string
+          descripcion?: string | null
+          equipo?: string | null
           foto_url?: string | null
           id?: string
-          link_yupoo?: string | null
+          link_yupoo: string
           nombre: string
           precio_venta_mxn: number
         }
@@ -116,9 +120,11 @@ export type Database = {
           codigo?: string
           color?: string | null
           created_at?: string
+          descripcion?: string | null
+          equipo?: string | null
           foto_url?: string | null
           id?: string
-          link_yupoo?: string | null
+          link_yupoo?: string
           nombre?: string
           precio_venta_mxn?: number
         }
@@ -266,6 +272,8 @@ export type Database = {
           categoria: Database['public']['Enums']['categoria_cachucha'] | null
           codigo: string | null
           color: string | null
+          descripcion: string | null
+          equipo: string | null
           foto_url: string | null
           modelo_id: string | null
           nombre: string | null
@@ -300,12 +308,22 @@ export type Database = {
         Args: {
           p_categoria: Database['public']['Enums']['categoria_cachucha']
           p_color: string | null
+          p_descripcion: string | null
+          p_equipo: string | null
           p_foto_url: string | null
           p_link_yupoo: string
           p_nombre: string
           p_precio_venta_mxn: number
         }
         Returns: Database['public']['Tables']['modelos']['Row']
+      }
+      recibir_lote: {
+        Args: {
+          p_fecha: string
+          p_lote_id: string
+          p_unidad_ids: string[] | null
+        }
+        Returns: Array<{ recibidas: number; faltantes: number }>
       }
       registrar_venta: {
         Args: {

@@ -21,18 +21,18 @@ JM Caps es una tienda de gorras (cachuchas) en Colotlán, Jalisco, México, oper
 - Catálogo del proveedor vía álbum de Yupoo (worldcaps.x.yupoo.com).
 - Compra mínima: 10 productos por pedido. El proveedor genera un link de pago. Envío desde China.
 - Precio en dólares, varía con el tipo de cambio del día del pedido.
-- El link del álbum de cada diseño se conserva como referencia de compra (tabla `catalogo_proveedor` y campo `link_proveedor_referencia` en `modelos`), nunca se muestra al cliente.
+- El link del álbum de cada diseño se conserva como referencia de compra (tabla `catalogo_proveedor` y campo `link_yupoo` en `modelos`, que es obligatorio), nunca se muestra al cliente.
 
 ## Categorías de producto (códigos internos)
 
 | Código | Significado |
 |---|---|
-| AA | Calidad AA, fitted (ajuste cerrado) |
-| AAS | Calidad AA, snapback (ajustable) — mismo precio que AA |
+| AA | Estilo New Era fitted: cerradas, se venden por talla |
+| AAS | Estilo New Era snapback: ajustables con broche — mismo precio que AA |
 | UU | Calidad 1:1, fitted (mejores materiales, más cara) — pausado por ahora, rotación lenta al inicio |
 | UUS | Calidad 1:1, snapback — pausado por ahora |
 | K | Niños |
-| DH | Estilo Dandy Hats / streetwear urbano — sin logos de ligas deportivas, menor riesgo legal, mejor margen |
+| DH | Estilo Dandy Hats / streetwear urbano, ajustables — sin logos de ligas deportivas, menor riesgo legal, mejor margen |
 
 **Descontinuados** (no se vuelven a comprar): DE (diseños especiales) y JS (Jon Stan) — nunca se vendieron bien.
 
@@ -66,6 +66,14 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
   - Si no existe ningún modelo con ese link → se da de alta un modelo nuevo (nombre, color, categoría, precio, foto), usando ese link como su identificador permanente.
 - El panel de admin debe buscar por `link_yupoo` antes de registrar unidades nuevas — no debe dejar que el admin busque por nombre/color, porque ahí es donde se pierde el rastro.
 
+## Flujo de alta de mercancía (se captura al pedir, no al recibir)
+
+1. Se registra el **lote** al hacer el pedido al proveedor (fecha, total en dólares, tipo de cambio, envío).
+2. Con el álbum de Yupoo enfrente se capturan los productos del pedido: link, tipo de gorra, nombre, equipo (si aplica), color, descripción breve, talla y cantidad. Las unidades quedan en estado `pedido`, así que **no aparecen en el catálogo público** pero sí se sabe qué viene en camino.
+3. Cuando llega la caja a Tepatitlán se abre la **recepción del lote**: el panel lista lo que se esperaba y se confirma cuántas piezas llegaron realmente de cada modelo y talla. Solo lo confirmado pasa a `disponible`.
+4. Lo que no llegó se queda en estado `pedido` como reclamo abierto al proveedor — nunca se da por recibido automáticamente, porque eso pondría a la venta stock inexistente.
+5. Al volver a pedir el mismo diseño no se recaptura nada: el link ya existe y las piezas nuevas se suman a ese producto.
+
 ## Stack técnico
 
 - **Base de datos y auth:** Supabase, proyecto "Tienda Online JM Caps", en la organización de Supabase **"JM Caps"** (separada de "JM Labs", donde vive JISSEZ — son cuentas/organizaciones distintas, ojo al conectar el MCP de Supabase correcto en cada sesión).
@@ -82,7 +90,7 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 ### Tablas
 
 **`modelos`** — el producto visible al cliente
-- `id` (uuid, pk), `codigo` (text, unique), `categoria` (enum: AA/AAS/UU/UUS/K/DH), `nombre` (text), `color` (text), `precio_venta_mxn` (numeric), `foto_url` (text), `link_yupoo` (text, **unique** — es la llave real para saber si un modelo ya existe al dar de alta mercancía nueva), `activo` (boolean)
+- `id` (uuid, pk), `codigo` (text, unique — lo genera la base, formato `AA-001`), `categoria` (enum: AA/AAS/UU/UUS/K/DH), `nombre` (text), `equipo` (text, null en diseños sin logo), `color` (text), `descripcion` (text), `precio_venta_mxn` (numeric), `foto_url` (text), `link_yupoo` (text, **unique y not null** — es la llave real para saber si un modelo ya existe al dar de alta mercancía nueva), `activo` (boolean)
 
 **`unidades`** — una fila = una gorra física. El `id` es el valor que va en el código de barras/QR.
 - `id` (uuid, pk), `modelo_id` (fk → modelos), `lote_id` (fk → lotes), `talla` (text, null si es ajustable), `costo_unitario_mxn` (numeric), `estado` (enum: pedido/en_transito/disponible/apartada/vendida), `apartado_hasta` (timestamptz), `apartado_nombre` (text), `apartado_telefono` (text), `foto_real_url` (text — foto de la unidad física real, no la del proveedor), `fecha_alta` (timestamptz), `fecha_venta` (timestamptz)
@@ -103,9 +111,16 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 
 **`catalogo_publico`** (creada con `security_invoker = true`, solo columnas seguras) — agrupa unidades disponibles por modelo, calcula `tallas_disponibles` y `stock_disponible`. Es lo único que la tienda pública debe consultar para armar el catálogo.
 
-### Función RPC pública
+### Funciones RPC
 
-**`apartar_unidad(p_modelo_id, p_talla, p_nombre, p_telefono)`** — reserva una unidad disponible de ese modelo/talla, pone `estado = 'apartada'` y `apartado_hasta = now() + 24h`. Es la única forma en que el público puede modificar inventario. `SECURITY DEFINER` intencional.
+**`apartar_unidad(p_modelo_id, p_talla, p_nombre, p_telefono)`** — pública. Reserva una unidad disponible de ese modelo/talla, pone `estado = 'apartada'` y `apartado_hasta = now() + 24h`. Es la única forma en que el público puede modificar inventario. `SECURITY DEFINER` intencional.
+
+Las siguientes son solo para el admin (`security invoker`, sujetas a RLS). Existen porque son operaciones de varios pasos: hacerlas con llamadas sueltas desde el navegador puede dejar el inventario inconsistente a media operación.
+
+- **`crear_modelo(p_categoria, p_nombre, p_precio_venta_mxn, p_link_yupoo, p_color, p_foto_url, p_equipo, p_descripcion)`** — da de alta el modelo generando el código consecutivo por categoría sin carrera entre altas simultáneas.
+- **`agregar_unidades(p_modelo_id, p_cantidad, p_talla, p_lote_id, p_costo_unitario_mxn)`** — crea N piezas físicas. El estado inicial sigue al del lote: si el lote está en `pedido`, las piezas nacen en `pedido`.
+- **`recibir_lote(p_lote_id, p_fecha, p_unidad_ids)`** — marca el lote recibido y pasa a `disponible` solo las piezas confirmadas. Sin lista, se da por recibido todo.
+- **`registrar_venta(p_unidad_ids, p_metodo_pago, p_canal, p_cliente_nombre, p_cliente_telefono, p_notas)`** — venta completa (encabezado, items y cambio de estado). Bloquea las filas antes de cobrar para que dos ventas simultáneas no vendan la misma pieza.
 
 ### Automatización
 
@@ -121,12 +136,14 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 ## Estado actual del proyecto
 
 1. ✅ Análisis de negocio y mejores prácticas — hecho
-2. ✅ Esquema de base de datos en Supabase — hecho (tablas, RLS, vista, función, cron, storage)
-3. ⏳ Repositorio en GitHub — en proceso
-4. ⏳ **Panel de administración — siguiente paso.** Debe permitir: dar de alta lotes, dar de alta unidades nuevas buscando primero por `link_yupoo` si el modelo ya existe (no por nombre/color — ahí se pierde el rastro), generar/vincular código de barras por unidad, subir fotos reales, marcar ventas, ver apartados activos y su vencimiento.
-5. Después del panel: cargar el primer lote real de inventario.
+2. ✅ Esquema de base de datos en Supabase — hecho (tablas, RLS, vista, funciones, cron, storage)
+3. ✅ Panel de administración — hecho, en `apps/admin`: inventario con stock por talla, alta de productos desde el pedido, recepción de lote con verificación, etiquetas QR por pieza, venta por escaneo, apartados y prorrateo de costos.
+4. ⏳ Repositorio en GitHub — falta subirlo (el repo local ya existe).
+5. ⏳ **Siguiente paso: crear el usuario admin** en Authentication → Users del dashboard (con Auto Confirm activado) y cargar el primer lote real.
 6. Después: diseño de la tienda pública con Claude Design, usando datos y fotos reales (no relleno).
-7. Conectar ese diseño al backend de Supabase (catálogo, selector de talla, apartado).
+7. Conectar ese diseño al backend de Supabase (catálogo, filtros por equipo/categoría/color, selector de talla, apartado).
+
+Pendiente menor: las ocho migraciones originales del esquema están aplicadas en Supabase pero no volcadas al repo. Para traerlas hace falta la contraseña de la base (`npx supabase link` + `npx supabase db pull`).
 
 ## Preferencias
 

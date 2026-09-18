@@ -6,10 +6,11 @@ import { Cargando } from './components/ui'
 import { Login } from './pages/Login'
 import { Inventario } from './pages/Inventario'
 import { ModeloDetalle } from './pages/ModeloDetalle'
-import { RecibirMercancia } from './pages/RecibirMercancia'
+import { RegistrarProductos } from './pages/RegistrarProductos'
 import { RegistrarVenta } from './pages/RegistrarVenta'
 import { Apartados } from './pages/Apartados'
 import { Lotes } from './pages/Lotes'
+import { RecepcionLote } from './pages/RecepcionLote'
 import { Historial } from './pages/Historial'
 
 const cliente = new QueryClient({
@@ -33,10 +34,11 @@ function Rutas() {
       <Route element={<Layout />}>
         <Route index element={<Inventario />} />
         <Route path="modelo/:id" element={<ModeloDetalle />} />
-        <Route path="recibir" element={<RecibirMercancia />} />
+        <Route path="productos" element={<RegistrarProductos />} />
         <Route path="venta" element={<RegistrarVenta />} />
         <Route path="apartados" element={<Apartados />} />
         <Route path="lotes" element={<Lotes />} />
+        <Route path="lotes/:id/recibir" element={<RecepcionLote />} />
         <Route path="ventas" element={<Historial />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
