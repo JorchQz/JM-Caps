@@ -85,6 +85,63 @@ export type Database = {
         }
         Relationships: []
       }
+      pedido_lineas: {
+        Row: {
+          cantidad: number
+          created_at: string
+          estado: Database['public']['Enums']['estado_linea_pedido']
+          id: string
+          link_yupoo: string
+          lote_id: string
+          modelo_id: string | null
+          nota: string | null
+          orden: number
+          talla: string | null
+          unidades_creadas: number
+        }
+        Insert: {
+          cantidad?: number
+          created_at?: string
+          estado?: Database['public']['Enums']['estado_linea_pedido']
+          id?: string
+          link_yupoo: string
+          lote_id: string
+          modelo_id?: string | null
+          nota?: string | null
+          orden?: number
+          talla?: string | null
+          unidades_creadas?: number
+        }
+        Update: {
+          cantidad?: number
+          created_at?: string
+          estado?: Database['public']['Enums']['estado_linea_pedido']
+          id?: string
+          link_yupoo?: string
+          lote_id?: string
+          modelo_id?: string | null
+          nota?: string | null
+          orden?: number
+          talla?: string | null
+          unidades_creadas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'pedido_lineas_lote_id_fkey'
+            columns: ['lote_id']
+            isOneToOne: false
+            referencedRelation: 'lotes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'pedido_lineas_modelo_id_fkey'
+            columns: ['modelo_id']
+            isOneToOne: false
+            referencedRelation: 'modelos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       modelos: {
         Row: {
           activo: boolean
@@ -298,11 +355,16 @@ export type Database = {
         Args: {
           p_cantidad: number
           p_costo_unitario_mxn: number | null
+          p_linea_id?: string | null
           p_lote_id: string | null
           p_modelo_id: string
           p_talla: string | null
         }
         Returns: string[]
+      }
+      confirmar_pedido: {
+        Args: { p_lote_id: string }
+        Returns: Array<{ confirmadas: number; descartadas: number; piezas: number }>
       }
       crear_modelo: {
         Args: {
@@ -340,7 +402,8 @@ export type Database = {
     Enums: {
       canal_venta: 'local_colotlan' | 'local_tepatitlan' | 'envio_nacional'
       categoria_cachucha: 'AA' | 'AAS' | 'UU' | 'UUS' | 'K' | 'DH'
-      estado_lote: 'pedido' | 'en_transito' | 'recibido'
+      estado_linea_pedido: 'solicitada' | 'confirmada' | 'no_disponible'
+      estado_lote: 'borrador' | 'pedido' | 'en_transito' | 'recibido'
       estado_unidad:
         | 'pedido'
         | 'en_transito'

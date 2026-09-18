@@ -11,6 +11,7 @@ import { RegistrarVenta } from './pages/RegistrarVenta'
 import { Apartados } from './pages/Apartados'
 import { Lotes } from './pages/Lotes'
 import { RecepcionLote } from './pages/RecepcionLote'
+import { PedidoProveedor } from './pages/PedidoProveedor'
 import { Historial } from './pages/Historial'
 
 const cliente = new QueryClient({
@@ -38,6 +39,7 @@ function Rutas() {
         <Route path="venta" element={<RegistrarVenta />} />
         <Route path="apartados" element={<Apartados />} />
         <Route path="lotes" element={<Lotes />} />
+        <Route path="lotes/:id/pedido" element={<PedidoProveedor />} />
         <Route path="lotes/:id/recibir" element={<RecepcionLote />} />
         <Route path="ventas" element={<Historial />} />
       </Route>

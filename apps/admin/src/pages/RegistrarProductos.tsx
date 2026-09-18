@@ -16,8 +16,10 @@ import {
   buscarModeloPorLink,
   cargarLotes,
   crearModelo,
+  lineasDePedido,
   llaves,
   subirFoto,
+  type LineaConModelo,
   type Modelo,
 } from '../lib/consultas'
 import { Aviso, Campo, EncabezadoPagina, MensajeError } from '../components/ui'
@@ -30,27 +32,43 @@ type Paso =
 /** Lo que le pasa a las piezas según el estado del lote al que se asocian. */
 function destinoSegunLote(estado: EstadoLote | null): string {
   if (estado === null) return 'Entran directo a stock disponible.'
+  if (estado === 'borrador') return 'El pedido todavía no está confirmado con el proveedor.'
   if (estado === 'recibido') return 'El lote ya está recibido: las piezas entran directo a stock.'
-  return 'Quedan como pedidas y entran a stock cuando marques el lote como recibido.'
+  return 'Quedan como pedidas y entran a stock cuando recibas el lote.'
 }
 
 export function RegistrarProductos() {
   const [link, setLink] = useState('')
   const [loteId, setLoteId] = useState('')
+  const [lineaActiva, setLineaActiva] = useState<LineaConModelo | null>(null)
   const [paso, setPaso] = useState<Paso>({ tipo: 'buscar' })
   const [confirmacion, setConfirmacion] = useState<string | null>(null)
 
   const lotes = useQuery({ queryKey: llaves.lotes, queryFn: cargarLotes })
 
-  // Preselecciona el lote abierto más reciente: casi siempre se captura
-  // seguido, varias piezas del mismo pedido, una tras otra.
+  // Preselecciona el pedido confirmado más reciente: casi siempre se captura
+  // seguido, varias piezas del mismo pedido, una tras otra. Un borrador no
+  // sirve para capturar, así que solo entra si no hay nada mejor.
   useEffect(() => {
     if (loteId || !lotes.data) return
-    const abierto = lotes.data.find((lote) => lote.estado !== 'recibido')
-    if (abierto) setLoteId(abierto.id)
+    const capturable = lotes.data.find(
+      (lote) => lote.estado === 'pedido' || lote.estado === 'en_transito',
+    )
+    if (capturable) setLoteId(capturable.id)
   }, [lotes.data, loteId])
 
   const loteSeleccionado = (lotes.data ?? []).find((lote) => lote.id === loteId) ?? null
+  const esBorrador = loteSeleccionado?.estado === 'borrador'
+
+  const lineas = useQuery({
+    queryKey: llaves.lineasDePedido(loteId),
+    queryFn: () => lineasDePedido(loteId),
+    enabled: Boolean(loteId) && !esBorrador,
+  })
+
+  const pendientes = (lineas.data ?? []).filter(
+    (linea) => linea.estado === 'confirmada' && linea.unidades_creadas < linea.cantidad,
+  )
 
   const busqueda = useMutation({
     mutationFn: (valor: string) => buscarModeloPorLink(valor),
@@ -63,13 +81,23 @@ export function RegistrarProductos() {
   function buscar(evento: FormEvent) {
     evento.preventDefault()
     if (!link.trim()) return
+    setLineaActiva(null)
     busqueda.mutate(link)
+  }
+
+  /** Continúa el pedido donde se quedó: el link ya lo acordaste con el proveedor. */
+  function capturarLinea(linea: LineaConModelo) {
+    setLineaActiva(linea)
+    setLink(linea.link_yupoo)
+    setConfirmacion(null)
+    busqueda.mutate(linea.link_yupoo)
   }
 
   function reiniciar(mensaje: string) {
     setConfirmacion(mensaje)
     setPaso({ tipo: 'buscar' })
     setLink('')
+    setLineaActiva(null)
     busqueda.reset()
   }
 
@@ -101,11 +129,58 @@ export function RegistrarProductos() {
 
         {(lotes.data ?? []).length === 0 ? (
           <Aviso>
-            Todavía no hay lotes. <Link to="/lotes">Registra primero el pedido</Link> para poder
-            seguir su costo y su llegada.
+            Todavía no hay pedidos. <Link to="/lotes">Arma primero el pedido</Link> con los links
+            que le vas a mandar al proveedor.
+          </Aviso>
+        ) : null}
+
+        {esBorrador ? (
+          <Aviso>
+            Este pedido sigue en borrador. Confírmalo con el proveedor desde{' '}
+            <Link to={`/lotes/${loteId}/pedido`}>la pantalla del pedido</Link> antes de capturar
+            productos: hasta entonces no se sabe qué te va a mandar.
           </Aviso>
         ) : null}
       </div>
+
+      {pendientes.length > 0 ? (
+        <div className="tarjeta">
+          <h2 style={{ marginBottom: 4 }}>Falta capturar de este pedido ({pendientes.length})</h2>
+          <p className="tenue" style={{ marginTop: 0, fontSize: '0.88rem' }}>
+            Los links ya los acordaste con el proveedor. Toca uno y solo captura lo que falta.
+          </p>
+
+          <div className="tabla-contenedor">
+            <table>
+              <tbody>
+                {pendientes.map((linea) => (
+                  <tr key={linea.id}>
+                    <td>
+                      {linea.modelo ? (
+                        <strong>{linea.modelo.nombre}</strong>
+                      ) : (
+                        <strong className="tenue">Diseño nuevo</strong>
+                      )}
+                      <div className="tenue mono" style={{ fontSize: '0.78rem' }}>
+                        {linea.link_yupoo}
+                      </div>
+                    </td>
+                    <td>{linea.talla ?? 'Ajustable'}</td>
+                    <td className="numero">
+                      {linea.cantidad - linea.unidades_creadas} de {linea.cantidad}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button type="button" onClick={() => capturarLinea(linea)}>
+                        Capturar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
 
       <div className="tarjeta">
         <form onSubmit={buscar}>
@@ -135,11 +210,21 @@ export function RegistrarProductos() {
       </div>
 
       {paso.tipo === 'modelo_existente' ? (
-        <ModeloEncontrado modelo={paso.modelo} loteId={loteId} alTerminar={reiniciar} />
+        <ModeloEncontrado
+          modelo={paso.modelo}
+          loteId={loteId}
+          linea={lineaActiva}
+          alTerminar={reiniciar}
+        />
       ) : null}
 
       {paso.tipo === 'modelo_nuevo' ? (
-        <ModeloNuevo link={paso.link} loteId={loteId} alTerminar={reiniciar} />
+        <ModeloNuevo
+          link={paso.link}
+          loteId={loteId}
+          linea={lineaActiva}
+          alTerminar={reiniciar}
+        />
       ) : null}
     </>
   )
@@ -150,10 +235,12 @@ export function RegistrarProductos() {
 function ModeloEncontrado({
   modelo,
   loteId,
+  linea,
   alTerminar,
 }: {
   modelo: Modelo
   loteId: string
+  linea: LineaConModelo | null
   alTerminar: (mensaje: string) => void
 }) {
   return (
@@ -179,7 +266,13 @@ function ModeloEncontrado({
         </div>
       </div>
 
-      <FormularioUnidades modelo={modelo} loteId={loteId} alTerminar={alTerminar} />
+      <FormularioUnidades
+        key={linea?.id ?? modelo.id}
+        modelo={modelo}
+        loteId={loteId}
+        linea={linea}
+        alTerminar={alTerminar}
+      />
     </div>
   )
 }
@@ -189,10 +282,12 @@ function ModeloEncontrado({
 function ModeloNuevo({
   link,
   loteId,
+  linea,
   alTerminar,
 }: {
   link: string
   loteId: string
+  linea: LineaConModelo | null
   alTerminar: (mensaje: string) => void
 }) {
   const [categoria, setCategoria] = useState<Categoria>('AA')
@@ -233,7 +328,12 @@ function ModeloNuevo({
           Producto dado de alta con código <span className="mono">{modeloCreado.codigo}</span>. Ahora
           indica cuántas piezas pediste y en qué talla.
         </Aviso>
-        <FormularioUnidades modelo={modeloCreado} loteId={loteId} alTerminar={alTerminar} />
+        <FormularioUnidades
+          modelo={modeloCreado}
+          loteId={loteId}
+          linea={linea}
+          alTerminar={alTerminar}
+        />
       </div>
     )
   }
@@ -346,18 +446,23 @@ function ModeloNuevo({
 function FormularioUnidades({
   modelo,
   loteId,
+  linea,
   alTerminar,
 }: {
   modelo: Modelo
   loteId: string
+  linea: LineaConModelo | null
   alTerminar: (mensaje: string) => void
 }) {
   const clienteQuery = useQueryClient()
   const info = CATEGORIAS[modelo.categoria]
 
-  const [ajustable, setAjustable] = useState(!info.usaTalla)
-  const [talla, setTalla] = useState<string>(info.usaTalla ? '7 1/4' : '')
-  const [cantidad, setCantidad] = useState('1')
+  // Si viene de una linea del pedido, talla y cantidad ya se acordaron con el
+  // proveedor: se precargan para no recapturar lo que ya esta decidido.
+  const faltantes = linea ? Math.max(1, linea.cantidad - linea.unidades_creadas) : 1
+  const [ajustable, setAjustable] = useState(linea ? linea.talla === null : !info.usaTalla)
+  const [talla, setTalla] = useState<string>(linea?.talla ?? (info.usaTalla ? '7 1/4' : ''))
+  const [cantidad, setCantidad] = useState(String(faltantes))
   const [costo, setCosto] = useState('')
 
   const alta = useMutation({
@@ -368,10 +473,12 @@ function FormularioUnidades({
         talla: ajustable ? null : talla,
         lote_id: loteId || null,
         costo_unitario_mxn: costo ? Number(costo) : null,
+        linea_id: linea?.id ?? null,
       }),
     onSuccess: (ids) => {
       void clienteQuery.invalidateQueries({ queryKey: llaves.inventario })
       void clienteQuery.invalidateQueries({ queryKey: llaves.lotes })
+      if (loteId) void clienteQuery.invalidateQueries({ queryKey: llaves.lineasDePedido(loteId) })
       void clienteQuery.invalidateQueries({ queryKey: llaves.unidadesDeModelo(modelo.id) })
       const descripcion = ajustable ? 'ajustable' : `talla ${talla}`
       alTerminar(

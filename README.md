@@ -57,10 +57,14 @@ servidor llega a necesitarla, se registra como secreto en Cloudflare.
 
 ## Cómo funciona el panel
 
-Los productos se capturan **desde que se hace el pedido**, no cuando llega la
-caja: con el álbum del proveedor abierto enfrente y sin prisa. Las piezas nacen
-en estado `pedido`, así que no aparecen en el catálogo público pero sí se sabe
-qué viene en camino.
+Un pedido empieza como **borrador**: solo links de Yupoo, tallas y cantidades,
+que es lo que el proveedor necesita para cotizar. Se le manda por WhatsApp como
+PDF con links clicables o como texto plano. Cuando contesta qué tiene, se marca
+lo no disponible, se ajusta y se confirma.
+
+Solo entonces se capturan los productos, con el álbum abierto enfrente y sin
+prisa. Las piezas nacen en estado `pedido`, así que no aparecen en el catálogo
+público pero sí se sabe qué viene en camino.
 
 La alta arranca siempre por el link del álbum de Yupoo, nunca por nombre o
 color. Dos gorras negras del mismo equipo pueden ser productos distintos del
@@ -89,6 +93,7 @@ usa el panel:
 - `agregar_unidades` — alta de N piezas físicas en una sola transacción
 - `registrar_venta` — venta completa (encabezado, items y cambio de estado)
 - `recibir_lote` — recepción con verificación pieza por pieza
+- `confirmar_pedido` — cierra el borrador del pedido al proveedor
 
 Las ocho migraciones anteriores (tablas, RLS, vista pública, `apartar_unidad`,
 cron de expiración y bucket de fotos) están aplicadas en Supabase pero todavía

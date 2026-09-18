@@ -79,10 +79,22 @@ export const ESTADOS_UNIDAD: Record<EstadoUnidad, string> = {
 }
 
 export const ESTADOS_LOTE: Record<EstadoLote, string> = {
+  borrador: 'Borrador',
   pedido: 'Pedido',
   en_transito: 'En tránsito',
   recibido: 'Recibido',
 }
+
+export type EstadoLineaPedido = Enums<'estado_linea_pedido'>
+
+export const ESTADOS_LINEA: Record<EstadoLineaPedido, string> = {
+  solicitada: 'Solicitada',
+  confirmada: 'Confirmada',
+  no_disponible: 'No disponible',
+}
+
+/** Mínimo de piezas por pedido que exige el proveedor. */
+export const MINIMO_PIEZAS_PEDIDO = 10
 
 export const METODOS_PAGO: Record<MetodoPago, string> = {
   efectivo: 'Efectivo',

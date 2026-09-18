@@ -68,8 +68,8 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 
 ## Flujo de alta de mercancía (se captura al pedir, no al recibir)
 
-1. Se registra el **lote** al hacer el pedido al proveedor (fecha, total en dólares, tipo de cambio, envío).
-2. Con el álbum de Yupoo enfrente se capturan los productos del pedido: link, tipo de gorra, nombre, equipo (si aplica), color, descripción breve, talla y cantidad. Las unidades quedan en estado `pedido`, así que **no aparecen en el catálogo público** pero sí se sabe qué viene en camino.
+1. Se **arma el pedido** en estado `borrador`: solo link de Yupoo, talla y cantidad de cada artículo, que es lo que el proveedor necesita para cotizar. Se le manda por WhatsApp como PDF con links clicables o como texto. Casi siempre contesta que algo ya no hay: se marca esa línea como no disponible y se ajustan cantidades.
+2. Cuando el proveedor confirma, el pedido pasa a `pedido` y **recién entonces** se capturan los productos: tipo de gorra, nombre, equipo (si aplica), color, descripción breve y precio. El panel lista las líneas que faltan por capturar, con su link ya resuelto. Las unidades quedan en estado `pedido`, así que **no aparecen en el catálogo público** pero sí se sabe qué viene en camino.
 3. Cuando llega la caja a Tepatitlán se abre la **recepción del lote**: el panel lista lo que se esperaba y se confirma cuántas piezas llegaron realmente de cada modelo y talla. Solo lo confirmado pasa a `disponible`.
 4. Lo que no llegó se queda en estado `pedido` como reclamo abierto al proveedor — nunca se da por recibido automáticamente, porque eso pondría a la venta stock inexistente.
 5. Al volver a pedir el mismo diseño no se recaptura nada: el link ya existe y las piezas nuevas se suman a ese producto.
@@ -96,7 +96,10 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 - `id` (uuid, pk), `modelo_id` (fk → modelos), `lote_id` (fk → lotes), `talla` (text, null si es ajustable), `costo_unitario_mxn` (numeric), `estado` (enum: pedido/en_transito/disponible/apartada/vendida), `apartado_hasta` (timestamptz), `apartado_nombre` (text), `apartado_telefono` (text), `foto_real_url` (text — foto de la unidad física real, no la del proveedor), `fecha_alta` (timestamptz), `fecha_venta` (timestamptz)
 
 **`lotes`** — cada pedido al proveedor
-- `id` (uuid, pk), `fecha_pedido` (date), `fecha_recepcion` (date), `tipo_cambio_dia` (numeric), `total_usd` (numeric), `costo_envio_mxn` (numeric — para prorratear entre unidades), `estado` (enum: pedido/en_transito/recibido)
+- `id` (uuid, pk), `fecha_pedido` (date), `fecha_recepcion` (date), `tipo_cambio_dia` (numeric), `total_usd` (numeric), `costo_envio_mxn` (numeric — para prorratear entre unidades), `estado` (enum: borrador/pedido/en_transito/recibido)
+
+**`pedido_lineas`** — el borrador de lo que se le pide al proveedor. No es inventario: el inventario nace al confirmar.
+- `id` (uuid, pk), `lote_id` (fk), `link_yupoo` (text), `talla` (text), `cantidad` (int), `estado` (enum: solicitada/confirmada/no_disponible), `nota` (text — para el proveedor), `modelo_id` (fk, se resuelve solo si el link ya existe), `unidades_creadas` (int — avance de captura), `orden` (int)
 
 **`ventas`** — encabezado de cada venta
 - `id` (uuid, pk), `fecha`, `total_mxn`, `metodo_pago` (enum: efectivo/spei/otro), `canal` (enum: local_colotlan/local_tepatitlan/envio_nacional), `cliente_nombre`, `cliente_telefono`
@@ -118,7 +121,8 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 Las siguientes son solo para el admin (`security invoker`, sujetas a RLS). Existen porque son operaciones de varios pasos: hacerlas con llamadas sueltas desde el navegador puede dejar el inventario inconsistente a media operación.
 
 - **`crear_modelo(p_categoria, p_nombre, p_precio_venta_mxn, p_link_yupoo, p_color, p_foto_url, p_equipo, p_descripcion)`** — da de alta el modelo generando el código consecutivo por categoría sin carrera entre altas simultáneas.
-- **`agregar_unidades(p_modelo_id, p_cantidad, p_talla, p_lote_id, p_costo_unitario_mxn)`** — crea N piezas físicas. El estado inicial sigue al del lote: si el lote está en `pedido`, las piezas nacen en `pedido`.
+- **`agregar_unidades(p_modelo_id, p_cantidad, p_talla, p_lote_id, p_costo_unitario_mxn, p_linea_id)`** — crea N piezas físicas. El estado inicial sigue al del lote: si el lote está en `pedido`, las piezas nacen en `pedido`. Rechaza lotes en `borrador`: el proveedor todavía no confirma qué va a mandar.
+- **`confirmar_pedido(p_lote_id)`** — cierra el borrador: marca como confirmadas las líneas vigentes y pasa el lote a `pedido`.
 - **`recibir_lote(p_lote_id, p_fecha, p_unidad_ids)`** — marca el lote recibido y pasa a `disponible` solo las piezas confirmadas. Sin lista, se da por recibido todo.
 - **`registrar_venta(p_unidad_ids, p_metodo_pago, p_canal, p_cliente_nombre, p_cliente_telefono, p_notas)`** — venta completa (encabezado, items y cambio de estado). Bloquea las filas antes de cobrar para que dos ventas simultáneas no vendan la misma pieza.
 
@@ -128,7 +132,7 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 
 ### Seguridad (RLS)
 
-- RLS activo en las 6 tablas.
+- RLS activo en las 7 tablas.
 - El público (`anon`) solo puede: leer `catalogo_publico`, leer columnas seguras de `modelos`/`unidades` (sin costos ni datos de apartado) filtradas por `activo`/`disponible`, y ejecutar `apartar_unidad()`.
 - Cualquier usuario autenticado (el admin) tiene acceso completo a todo, vía políticas `admin_full_access`. El usuario admin se crea manualmente en Authentication → Users del dashboard de Supabase.
 - Bucket de Storage `fotos-productos`: lectura pública, solo un usuario autenticado puede subir/editar/borrar.
@@ -137,7 +141,7 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 
 1. ✅ Análisis de negocio y mejores prácticas — hecho
 2. ✅ Esquema de base de datos en Supabase — hecho (tablas, RLS, vista, funciones, cron, storage)
-3. ✅ Panel de administración — hecho, en `apps/admin`: inventario con stock por talla, alta de productos desde el pedido, recepción de lote con verificación, etiquetas QR por pieza, venta por escaneo, apartados y prorrateo de costos.
+3. ✅ Panel de administración — hecho, en `apps/admin`: armado del pedido al proveedor (PDF y texto para WhatsApp), captura de productos desde el pedido confirmado, recepción de lote con verificación, inventario con stock por talla, etiquetas QR por pieza, venta por escaneo, apartados y prorrateo de costos.
 4. ⏳ Repositorio en GitHub — falta subirlo (el repo local ya existe).
 5. ⏳ **Siguiente paso: crear el usuario admin** en Authentication → Users del dashboard (con Auto Confirm activado) y cargar el primer lote real.
 6. Después: diseño de la tienda pública con Claude Design, usando datos y fotos reales (no relleno).

@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ESTADOS_LOTE, formatearMXN, type EstadoLote } from '@jm-caps/db'
 import {
   actualizarLote,
   cargarLotes,
   crearLote,
+  crearPedidoBorrador,
   llaves,
   prorratearCostos,
   type Lote,
@@ -16,8 +17,19 @@ const HOY = () => new Date().toISOString().slice(0, 10)
 
 export function Lotes() {
   const clienteQuery = useQueryClient()
+  const navegar = useNavigate()
   const { data, isLoading, error } = useQuery({ queryKey: llaves.lotes, queryFn: cargarLotes })
   const [mensaje, setMensaje] = useState<string | null>(null)
+
+  // Un pedido nace vacío y en borrador: lo primero es juntar los links para
+  // mandárselos al proveedor, no capturar costos que todavía no se conocen.
+  const nuevoPedido = useMutation({
+    mutationFn: () => crearPedidoBorrador(HOY(), null),
+    onSuccess: (lote) => {
+      void clienteQuery.invalidateQueries({ queryKey: llaves.lotes })
+      navegar(`/lotes/${lote.id}/pedido`)
+    },
+  })
 
   function refrescar() {
     void clienteQuery.invalidateQueries({ queryKey: llaves.lotes })
@@ -28,8 +40,20 @@ export function Lotes() {
     <>
       <EncabezadoPagina
         titulo="Lotes"
-        descripcion="Cada pedido al proveedor. Sirve para saber el costo real por gorra: mercancía en dólares por el tipo de cambio del día, más el envío repartido entre las piezas."
+        descripcion="Cada pedido al proveedor, desde que lo armas hasta que llega. Aquí también sale el costo real por gorra: mercancía en dólares por el tipo de cambio del día, más el envío repartido entre las piezas."
+        acciones={
+          <button
+            type="button"
+            className="principal"
+            disabled={nuevoPedido.isPending}
+            onClick={() => nuevoPedido.mutate()}
+          >
+            {nuevoPedido.isPending ? 'Creando' : 'Armar pedido nuevo'}
+          </button>
+        }
       />
+
+      <MensajeError error={nuevoPedido.error} />
 
       {mensaje ? <Aviso tipo="exito">{mensaje}</Aviso> : null}
       <MensajeError error={error} />
@@ -126,6 +150,8 @@ function FilaLote({
       <td>
         {lote.estado === 'recibido' ? (
           <span className="insignia disponible">{ESTADOS_LOTE.recibido}</span>
+        ) : lote.estado === 'borrador' ? (
+          <span className="insignia">{ESTADOS_LOTE.borrador}</span>
         ) : (
           <select
             value={lote.estado}
@@ -143,20 +169,38 @@ function FilaLote({
       <td className="numero">{formatearMXN(lote.costo_envio_mxn)}</td>
       <td className="numero">{costoEstimado === null ? '-' : formatearMXN(costoEstimado)}</td>
       <td>
-        <Link to={`/lotes/${lote.id}/recibir`}>
-          <button type="button" className={lote.estado === 'recibido' ? 'discreto' : 'principal'}>
-            {lote.estado === 'recibido' ? 'Ver recepción' : 'Recibir'}
-          </button>
-        </Link>
-        <button
-          type="button"
-          className="discreto"
-          disabled={prorratear.isPending || lote.unidades === 0}
-          onClick={() => prorratear.mutate()}
-          title="Guarda el costo calculado en cada pieza del lote"
-        >
-          Prorratear
-        </button>
+        {lote.estado === 'borrador' ? (
+          <Link to={`/lotes/${lote.id}/pedido`}>
+            <button type="button" className="principal">
+              Armar pedido
+            </button>
+          </Link>
+        ) : (
+          <>
+            <Link to={`/lotes/${lote.id}/pedido`}>
+              <button type="button" className="discreto">
+                Ver pedido
+              </button>
+            </Link>
+            <Link to={`/lotes/${lote.id}/recibir`}>
+              <button
+                type="button"
+                className={lote.estado === 'recibido' ? 'discreto' : 'principal'}
+              >
+                {lote.estado === 'recibido' ? 'Ver recepción' : 'Recibir'}
+              </button>
+            </Link>
+            <button
+              type="button"
+              className="discreto"
+              disabled={prorratear.isPending || lote.unidades === 0}
+              onClick={() => prorratear.mutate()}
+              title="Guarda el costo calculado en cada pieza del lote"
+            >
+              Prorratear
+            </button>
+          </>
+        )}
         {prorratear.error ? (
           <div className="tenue" style={{ fontSize: '0.78rem' }}>
             {(prorratear.error as Error).message}
@@ -228,13 +272,11 @@ function NuevoLote({ alCrear }: { alCrear: () => void }) {
             />
           </Campo>
 
-          <Campo etiqueta="Estado">
+          <Campo etiqueta="Estado" ayuda="Para pedidos que ya hiciste fuera del panel. Los nuevos se arman con el botón de arriba.">
             <select value={estado} onChange={(evento) => setEstado(evento.target.value as EstadoLote)}>
-              {Object.entries(ESTADOS_LOTE).map(([valor, texto]) => (
-                <option key={valor} value={valor}>
-                  {texto}
-                </option>
-              ))}
+              <option value="pedido">{ESTADOS_LOTE.pedido}</option>
+              <option value="en_transito">{ESTADOS_LOTE.en_transito}</option>
+              <option value="recibido">{ESTADOS_LOTE.recibido}</option>
             </select>
           </Campo>
 

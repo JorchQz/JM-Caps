@@ -16,6 +16,7 @@ export const llaves = {
   lotes: ['lotes'] as const,
   lote: (id: string) => ['lote', id] as const,
   unidadesDeLote: (id: string) => ['unidades-lote', id] as const,
+  lineasDePedido: (id: string) => ['lineas-pedido', id] as const,
   apartados: ['apartados'] as const,
   ventas: ['ventas'] as const,
 }
@@ -192,6 +193,8 @@ export type DatosUnidadesNuevas = {
   talla: string | null
   lote_id: string | null
   costo_unitario_mxn: number | null
+  /** Línea del pedido que esta captura satisface, para llevar el avance. */
+  linea_id?: string | null
 }
 
 export async function agregarUnidades(datos: DatosUnidadesNuevas): Promise<string[]> {
@@ -201,6 +204,7 @@ export async function agregarUnidades(datos: DatosUnidadesNuevas): Promise<strin
     p_talla: datos.talla,
     p_lote_id: datos.lote_id,
     p_costo_unitario_mxn: datos.costo_unitario_mxn,
+    p_linea_id: datos.linea_id ?? null,
   })
 
   if (error) fallar('No se pudieron dar de alta las unidades', error)
@@ -367,6 +371,97 @@ export async function prorratearCostos(loteId: string): Promise<number> {
 
   if (errorActualizar) fallar('No se pudo guardar el costo prorrateado', errorActualizar)
   return costoUnitario
+}
+
+// ---------------------------------------------------------------------------
+// Pedido al proveedor (borrador)
+// ---------------------------------------------------------------------------
+
+export type LineaPedido = Tables<'pedido_lineas'>
+export type LineaConModelo = LineaPedido & { modelo: Modelo | null }
+
+export async function crearPedidoBorrador(fecha: string, notas: string | null): Promise<Lote> {
+  return crearLote({
+    fecha_pedido: fecha,
+    total_usd: null,
+    tipo_cambio_dia: null,
+    costo_envio_mxn: 0,
+    estado: 'borrador',
+    notas,
+  })
+}
+
+export async function lineasDePedido(loteId: string): Promise<LineaConModelo[]> {
+  const { data, error } = await supabase
+    .from('pedido_lineas')
+    .select('*, modelo:modelos(*)')
+    .eq('lote_id', loteId)
+    .order('orden', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) fallar('No se pudieron cargar las líneas del pedido', error)
+  return (data as LineaConModelo[] | null) ?? []
+}
+
+export type DatosLinea = {
+  lote_id: string
+  link_yupoo: string
+  talla: string | null
+  cantidad: number
+  nota: string | null
+}
+
+/**
+ * Agrega una línea al borrador. Si el link ya existe en el catálogo se amarra
+ * al modelo: al capturar después no hay que volver a escribir características.
+ */
+export async function agregarLinea(datos: DatosLinea): Promise<LineaPedido> {
+  const link = normalizarLinkYupoo(datos.link_yupoo)
+  const modelo = await buscarModeloPorLink(link)
+
+  const { data, error } = await supabase
+    .from('pedido_lineas')
+    .insert({
+      lote_id: datos.lote_id,
+      link_yupoo: link,
+      talla: datos.talla,
+      cantidad: datos.cantidad,
+      nota: datos.nota,
+      modelo_id: modelo?.id ?? null,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('Ese link con esa talla ya está en el pedido. Cambia la cantidad en su lugar.')
+    }
+    fallar('No se pudo agregar la línea', error)
+  }
+  return data
+}
+
+export async function actualizarLinea(id: string, cambios: Partial<LineaPedido>): Promise<void> {
+  const { error } = await supabase.from('pedido_lineas').update(cambios).eq('id', id)
+  if (error) fallar('No se pudo actualizar la línea', error)
+}
+
+export async function eliminarLinea(id: string): Promise<void> {
+  const { error } = await supabase.from('pedido_lineas').delete().eq('id', id)
+  if (error) fallar('No se pudo eliminar la línea', error)
+}
+
+export type ResultadoConfirmacion = {
+  confirmadas: number
+  descartadas: number
+  piezas: number
+}
+
+/** Cierra el borrador: el lote pasa a pedido y ya se pueden capturar productos. */
+export async function confirmarPedido(loteId: string): Promise<ResultadoConfirmacion> {
+  const { data, error } = await supabase.rpc('confirmar_pedido', { p_lote_id: loteId })
+  if (error) fallar('No se pudo confirmar el pedido', error)
+  return data?.[0] ?? { confirmadas: 0, descartadas: 0, piezas: 0 }
 }
 
 // ---------------------------------------------------------------------------
