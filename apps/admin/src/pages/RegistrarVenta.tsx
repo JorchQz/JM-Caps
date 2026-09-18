@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CANALES_VENTA,
   METODOS_PAGO,
+  formatearFecha,
   formatearMXN,
   telefonoWhatsApp,
   type CanalVenta,
@@ -17,6 +18,12 @@ import {
 import { Aviso, Campo, Cargando, EncabezadoPagina, MensajeError, Vacio } from '../components/ui'
 import { EscanerQR } from '../components/EscanerQR'
 import { usePersistente } from '../lib/persistencia'
+import {
+  encolarVenta,
+  guardarPiezas,
+  leerPiezas,
+  useVentasPendientes,
+} from '../lib/sinRed'
 
 export function RegistrarVenta() {
   const clienteQuery = useQueryClient()
@@ -34,9 +41,28 @@ export function RegistrarVenta() {
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
   const [notas, setNotas] = useState('')
-  const [ultimaVenta, setUltimaVenta] = useState<{ total: number; piezas: number } | null>(null)
+  const [ultimaVenta, setUltimaVenta] = useState<{
+    total: number
+    piezas: number
+    pendiente: boolean
+  } | null>(null)
 
-  const vendibles = useQuery({ queryKey: ['vendibles'], queryFn: unidadesVendibles })
+  const { cola, hayRed, refrescar: refrescarCola } = useVentasPendientes()
+
+  const vendibles = useQuery({
+    queryKey: ['vendibles'],
+    queryFn: async () => {
+      const piezas = await unidadesVendibles()
+      // Cada consulta con señal deja lista la copia para cuando no la haya.
+      guardarPiezas(piezas)
+      return piezas
+    },
+  })
+
+  // Sin red se trabaja con la última copia. Se avisa de cuándo es, porque un
+  // inventario viejo presentado como actual lleva a vender lo que ya no está.
+  const respaldo = vendibles.data ? null : leerPiezas()
+  const piezas = vendibles.data ?? respaldo?.piezas ?? []
 
   // El carrito se reconstruye contra lo que la base dice ahora mismo: si una
   // pieza guardada ya se vendió por otro lado, sale sola en vez de cobrarse dos
@@ -44,19 +70,19 @@ export function RegistrarVenta() {
   const carrito = useMemo(
     () =>
       foliosCarrito
-        .map((folio) => (vendibles.data ?? []).find((unidad) => unidad.folio === folio))
+        .map((folio) => piezas.find((unidad) => unidad.folio === folio))
         .filter((unidad): unidad is UnidadConModelo => Boolean(unidad)),
-    [foliosCarrito, vendibles.data],
+    [foliosCarrito, piezas],
   )
 
-  const perdidas = vendibles.data ? foliosCarrito.length - carrito.length : 0
+  const perdidas = piezas.length > 0 ? foliosCarrito.length - carrito.length : 0
 
   const enCarrito = useMemo(() => new Set(carrito.map((unidad) => unidad.id)), [carrito])
 
   const resultados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
     if (!texto) return []
-    return (vendibles.data ?? [])
+    return piezas
       .filter((unidad) => {
         if (enCarrito.has(unidad.id)) return false
         return (
@@ -67,7 +93,7 @@ export function RegistrarVenta() {
         )
       })
       .slice(0, 12)
-  }, [busqueda, vendibles.data, enCarrito])
+  }, [busqueda, piezas, enCarrito])
 
   const total = carrito.reduce((suma, unidad) => suma + unidad.modelo.precio_venta_mxn, 0)
 
@@ -91,7 +117,7 @@ export function RegistrarVenta() {
     const texto = busqueda.trim().toLowerCase()
     if (!texto) return
 
-    const exacta = (vendibles.data ?? []).find((unidad) => unidad.folio === texto)
+    const exacta = piezas.find((unidad) => unidad.folio === texto)
     if (exacta) {
       agregar(exacta)
       return
@@ -100,25 +126,45 @@ export function RegistrarVenta() {
   }
 
   const venta = useMutation({
-    mutationFn: () =>
-      registrarVenta({
+    mutationFn: async () => {
+      const datos = {
         unidadIds: carrito.map((unidad) => unidad.id),
         metodo_pago: metodoPago,
         canal,
         cliente_nombre: nombre.trim() || null,
         cliente_telefono: telefono.trim() || null,
         notas: notas.trim() || null,
-      }),
-    onSuccess: () => {
-      setUltimaVenta({ total, piezas: carrito.length })
+      }
+
+      // Sin señal la venta no se pierde: se guarda en el dispositivo y sube
+      // sola al recuperar red. El cliente ya pagó, el cobro no puede depender
+      // de que haya datos en la puerta de su casa.
+      if (!hayRed) {
+        encolarVenta({
+          datos,
+          resumen: carrito.map((unidad) => unidad.modelo.nombre).join(', '),
+          total,
+        })
+        return { pendiente: true }
+      }
+
+      await registrarVenta(datos)
+      return { pendiente: false }
+    },
+    onSuccess: (resultado) => {
+      setUltimaVenta({ total, piezas: carrito.length, pendiente: resultado.pendiente })
       limpiarCarrito()
       setNombre('')
       setTelefono('')
       setNotas('')
-      void vendibles.refetch()
-      void clienteQuery.invalidateQueries({ queryKey: llaves.inventario })
-      void clienteQuery.invalidateQueries({ queryKey: llaves.apartados })
-      void clienteQuery.invalidateQueries({ queryKey: llaves.ventas })
+      refrescarCola()
+
+      if (!resultado.pendiente) {
+        void vendibles.refetch()
+        void clienteQuery.invalidateQueries({ queryKey: llaves.inventario })
+        void clienteQuery.invalidateQueries({ queryKey: llaves.apartados })
+        void clienteQuery.invalidateQueries({ queryKey: llaves.ventas })
+      }
     },
   })
 
@@ -132,8 +178,38 @@ export function RegistrarVenta() {
       />
 
       {ultimaVenta ? (
-        <Aviso tipo="exito">
-          Venta registrada: {ultimaVenta.piezas} pieza(s) por {formatearMXN(ultimaVenta.total)}.
+        <Aviso tipo={ultimaVenta.pendiente ? 'neutro' : 'exito'}>
+          {ultimaVenta.pendiente
+            ? `Venta guardada sin señal: ${ultimaVenta.piezas} pieza(s) por ${formatearMXN(ultimaVenta.total)}. Sube sola en cuanto haya red.`
+            : `Venta registrada: ${ultimaVenta.piezas} pieza(s) por ${formatearMXN(ultimaVenta.total)}.`}
+        </Aviso>
+      ) : null}
+
+      {!hayRed ? (
+        <Aviso>
+          Sin conexión. Puedes escanear y cobrar igual: el inventario que ves es la última copia
+          {respaldo ? ` guardada ${formatearFecha(respaldo.guardadoEn)}` : ''}, y la venta se
+          sube sola cuando vuelva la señal.
+        </Aviso>
+      ) : null}
+
+      {cola.length > 0 ? (
+        <Aviso tipo={cola.some((fila) => fila.problema) ? 'error' : 'neutro'}>
+          {cola.length} venta(s) esperando subir.
+          {cola.some((fila) => fila.problema)
+            ? ' Alguna fue rechazada al subir: revisa el detalle abajo.'
+            : hayRed
+              ? ' Subiendo.'
+              : ' Se suben al recuperar la señal.'}
+          <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
+            {cola.map((fila) => (
+              <li key={fila.id} style={{ fontSize: '0.88rem' }}>
+                {formatearFecha(fila.creadaEn)} — {fila.resumen || 'Venta'} por{' '}
+                {formatearMXN(fila.total)}
+                {fila.problema ? `. Rechazada: ${fila.problema}` : ''}
+              </li>
+            ))}
+          </ul>
         </Aviso>
       ) : null}
 
@@ -172,7 +248,7 @@ export function RegistrarVenta() {
             alCerrar={() => setEscaneando(false)}
             alLeer={(texto) => {
               const folio = texto.trim()
-              const unidad = (vendibles.data ?? []).find((pieza) => pieza.folio === folio)
+              const unidad = piezas.find((pieza) => pieza.folio === folio)
 
               if (!unidad) {
                 setAvisoEscaneo(

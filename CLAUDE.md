@@ -166,6 +166,12 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 
 Pendiente menor: las ocho migraciones originales del esquema están aplicadas en Supabase pero no volcadas al repo. Para traerlas hace falta la contraseña de la base (`npx supabase link` + `npx supabase db pull`).
 
+## Trabajo sin red
+
+El panel se usa entregando gorras en casa del cliente, donde la red de datos falla. Está instalado como PWA: abre sin señal, guarda una copia local del inventario vendible (mostrando de cuándo es) y, si se cobra sin red, la venta se encola en el dispositivo y sube sola al recuperar señal. La base vuelve a validar cada venta encolada, así que si una pieza ya se vendió por otro lado la venta se rechaza y queda marcada con el motivo en vez de duplicarse.
+
+Lo confirmado vive en Supabase, así que un pedido se puede empezar en la computadora y terminar en el celular. Lo único que no cruza de dispositivo es lo que está a medio escribir: el borrador del formulario y el carrito de una venta sin cerrar, que se guardan en el navegador de ese aparato.
+
 ## Preferencias
 
 - Sin emojis en ninguna parte de la interfaz ni del código de cara al usuario.
