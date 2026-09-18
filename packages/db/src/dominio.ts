@@ -72,9 +72,12 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
 
 export const CATEGORIAS_LISTA: InfoCategoria[] = Object.values(CATEGORIAS)
 
-/** Tallas fitted de adulto, en el orden en que se muestran. */
+/**
+ * Tallas fitted de adulto, de 7 a 8 en octavos. Se listan todas aunque el
+ * proveedor no siempre tenga el rango completo: sobra una opción de más, falta
+ * no poder capturar una pieza que sí llegó.
+ */
 export const TALLAS_FITTED = [
-  '6 7/8',
   '7',
   '7 1/8',
   '7 1/4',
@@ -82,13 +85,22 @@ export const TALLAS_FITTED = [
   '7 1/2',
   '7 5/8',
   '7 3/4',
+  '7 7/8',
+  '8',
 ] as const
 
-/**
- * Tallas de niño (categoría K). Son las tres que maneja el proveedor en su
- * sección de niños; 6 7/8 se traslapa con la talla más chica de adulto.
- */
-export const TALLAS_NINO = ['6 3/8', '6 1/2', '6 7/8'] as const
+/** Tallas de niño (categoría K), de 6 a 7 en octavos. El 7 se traslapa con adulto. */
+export const TALLAS_NINO = [
+  '6',
+  '6 1/8',
+  '6 1/4',
+  '6 3/8',
+  '6 1/2',
+  '6 5/8',
+  '6 3/4',
+  '6 7/8',
+  '7',
+] as const
 
 /** Todas las tallas conocidas, para saber si una talla capturada es a la medida. */
 export const TALLAS_CONOCIDAS: readonly string[] = [
