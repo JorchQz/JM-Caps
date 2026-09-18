@@ -1,12 +1,28 @@
-import { CATEGORIAS } from '@jm-caps/db'
+import { CATEGORIAS, type Categoria } from '@jm-caps/db'
 import type { LineaConModelo, PrecioProveedor } from './consultas'
+
+/**
+ * Qué cantidad decide el escalón de precio. El proveedor cotiza por volumen,
+ * pero "producto de 30 piezas" admite dos lecturas: 30 del mismo diseño o 30 en
+ * todo el pedido. Se deja configurable en vez de adivinar.
+ */
+export type BaseEscalon = 'diseno' | 'categoria' | 'pedido'
+
+export const BASES_ESCALON: Record<BaseEscalon, string> = {
+  diseno: 'Piezas del mismo diseño',
+  categoria: 'Piezas del mismo tipo de gorra',
+  pedido: 'Piezas del pedido completo',
+}
 
 export type CosteoLinea = {
   linea: LineaConModelo
-  /** Precio unitario en dólares que aplica: el de la línea si lo hay, si no el de su categoría. */
+  /** Precio unitario en dólares que aplica, ya resuelto el escalón. */
   precioUsd: number | null
+  /** Cantidad que se usó para elegir el escalón, según la base configurada. */
+  piezasDelEscalon: number
+  /** Escalón aplicado, para poder verificar de dónde salió el precio. */
+  desdePiezas: number | null
   subtotalUsd: number | null
-  /** Precio de venta al público por pieza, para estimar el retorno del pedido. */
   ventaMxn: number | null
 }
 
@@ -14,34 +30,78 @@ export type CosteoPedido = {
   lineas: CosteoLinea[]
   piezas: number
   totalUsd: number
-  /** Piezas cuya categoría no tiene precio todavía: el total sale incompleto. */
   piezasSinPrecio: number
   categoriasSinPrecio: string[]
   totalMxn: number | null
   costoPorPiezaMxn: number | null
   ventaEstimadaMxn: number
-  /** Ganancia estimada si se vendiera todo el pedido a precio de lista. */
   margenMxn: number | null
 }
 
 /**
- * Costea el pedido con los precios vigentes del proveedor. Siempre es un
- * aproximado: el proveedor cobra en dólares y el costo real en pesos depende
- * del tipo de cambio del día en que se paga, no del de hoy.
+ * Elige el precio que aplica: el escalón más alto que la cantidad alcanza.
+ * Si no llega ni al primero, no hay precio — el proveedor tiene un mínimo.
+ */
+export function precioDelEscalon(
+  escalones: PrecioProveedor[],
+  categoria: Categoria | null,
+  piezas: number,
+): { precioUsd: number | null; desdePiezas: number | null } {
+  if (!categoria) return { precioUsd: null, desdePiezas: null }
+
+  const aplicables = escalones
+    .filter((escalon) => escalon.categoria === categoria && escalon.desde_piezas <= piezas)
+    .sort((a, b) => b.desde_piezas - a.desde_piezas)
+
+  const elegido = aplicables[0]
+  return elegido
+    ? { precioUsd: elegido.precio_usd, desdePiezas: elegido.desde_piezas }
+    : { precioUsd: null, desdePiezas: null }
+}
+
+/** Cantidad que decide el escalón de una línea, según la base configurada. */
+function piezasParaEscalon(
+  linea: LineaConModelo,
+  lineas: LineaConModelo[],
+  base: BaseEscalon,
+): number {
+  if (base === 'pedido') {
+    return lineas.reduce((suma, otra) => suma + otra.cantidad, 0)
+  }
+
+  if (base === 'categoria') {
+    return lineas
+      .filter((otra) => otra.categoria === linea.categoria)
+      .reduce((suma, otra) => suma + otra.cantidad, 0)
+  }
+
+  // Por diseño: el mismo link en distintas tallas sigue siendo el mismo producto.
+  return lineas
+    .filter((otra) => otra.link_yupoo === linea.link_yupoo)
+    .reduce((suma, otra) => suma + otra.cantidad, 0)
+}
+
+/**
+ * Costea el pedido con los escalones vigentes. Siempre es un aproximado: el
+ * proveedor cobra en dólares y el costo real en pesos depende del tipo de
+ * cambio del día en que se paga, no del de hoy.
  */
 export function costearPedido(
   lineas: LineaConModelo[],
-  precios: PrecioProveedor[],
+  escalones: PrecioProveedor[],
   tipoCambio: number | null,
+  base: BaseEscalon = 'diseno',
 ): CosteoPedido {
-  const porCategoria = new Map(precios.map((precio) => [precio.categoria, precio.precio_usd]))
-
   const detalle: CosteoLinea[] = lineas.map((linea) => {
-    const dePrecioLista = linea.categoria ? (porCategoria.get(linea.categoria) ?? null) : null
+    const piezasDelEscalon = piezasParaEscalon(linea, lineas, base)
+    const { precioUsd: dePrecioLista, desdePiezas } = precioDelEscalon(
+      escalones,
+      linea.categoria,
+      piezasDelEscalon,
+    )
+    // Un precio acordado para esa pieza en particular gana sobre la escalera.
     const precioUsd = linea.precio_usd_unitario ?? dePrecioLista
 
-    // El precio de venta sale del modelo si ya existe; si es diseño nuevo, del
-    // precio de lista de su categoría.
     const ventaMxn =
       linea.modelo?.precio_venta_mxn ??
       (linea.categoria ? CATEGORIAS[linea.categoria].precioSugerido : null)
@@ -49,6 +109,8 @@ export function costearPedido(
     return {
       linea,
       precioUsd,
+      piezasDelEscalon,
+      desdePiezas: linea.precio_usd_unitario !== null ? null : desdePiezas,
       subtotalUsd: precioUsd === null ? null : precioUsd * linea.cantidad,
       ventaMxn,
     }
@@ -60,7 +122,7 @@ export function costearPedido(
   const sinPrecio = detalle.filter((fila) => fila.precioUsd === null)
   const piezasSinPrecio = sinPrecio.reduce((suma, fila) => suma + fila.linea.cantidad, 0)
   const categoriasSinPrecio = [
-    ...new Set(sinPrecio.map((fila) => fila.linea.categoria ?? 'sin categoría')),
+    ...new Set(sinPrecio.map((fila) => fila.linea.categoria ?? 'sin tipo definido')),
   ]
 
   const totalMxn = tipoCambio && tipoCambio > 0 ? totalUsd * tipoCambio : null

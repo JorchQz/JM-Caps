@@ -89,20 +89,41 @@ export type Database = {
         Row: {
           actualizado_en: string
           categoria: Database['public']['Enums']['categoria_cachucha']
-          notas: string | null
-          precio_usd: number | null
+          desde_piezas: number
+          precio_usd: number
         }
         Insert: {
           actualizado_en?: string
           categoria: Database['public']['Enums']['categoria_cachucha']
-          notas?: string | null
-          precio_usd?: number | null
+          desde_piezas: number
+          precio_usd: number
         }
         Update: {
           actualizado_en?: string
           categoria?: Database['public']['Enums']['categoria_cachucha']
-          notas?: string | null
-          precio_usd?: number | null
+          desde_piezas?: number
+          precio_usd?: number
+        }
+        Relationships: []
+      }
+      configuracion: {
+        Row: {
+          actualizado_en: string
+          clave: string
+          descripcion: string | null
+          valor: string
+        }
+        Insert: {
+          actualizado_en?: string
+          clave: string
+          descripcion?: string | null
+          valor: string
+        }
+        Update: {
+          actualizado_en?: string
+          clave?: string
+          descripcion?: string | null
+          valor?: string
         }
         Relationships: []
       }
@@ -390,7 +411,7 @@ export type Database = {
         Returns: string[]
       }
       confirmar_pedido: {
-        Args: { p_lote_id: string }
+        Args: { p_lote_id: string; p_total_usd?: number | null }
         Returns: Array<{
           confirmadas: number
           descartadas: number

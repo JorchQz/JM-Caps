@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -14,18 +14,28 @@ import {
 import {
   actualizarLinea,
   actualizarLote,
-  actualizarPrecioProveedor,
   agregarLinea,
   cargarPreciosProveedor,
   confirmarPedido,
+  eliminarEscalonPrecio,
   eliminarLinea,
+  guardarConfiguracion,
+  guardarEscalonPrecio,
+  leerConfiguracion,
   lineasDePedido,
   llaves,
   obtenerLote,
   type LineaConModelo,
   type ResultadoConfirmacion,
 } from '../lib/consultas'
-import { costearPedido, formatearUSD, type CosteoLinea, type CosteoPedido } from '../lib/costeoPedido'
+import {
+  BASES_ESCALON,
+  costearPedido,
+  formatearUSD,
+  type BaseEscalon,
+  type CosteoLinea,
+  type CosteoPedido,
+} from '../lib/costeoPedido'
 import { descargarPdfPedido, textoPedido } from '../lib/pedidoProveedor'
 import { SelectorTalla } from '../components/SelectorTalla'
 import {
@@ -48,6 +58,10 @@ export function PedidoProveedor() {
   const clienteQuery = useQueryClient()
   const [copiado, setCopiado] = useState(false)
   const [resultado, setResultado] = useState<ResultadoConfirmacion | null>(null)
+  // El total lo calcula esta pantalla, que es donde vive la logica de
+  // escalones, pero la mutacion se declara antes de tenerlo: la referencia
+  // deja que lo lea en el momento de confirmar.
+  const totalParaConfirmar = useRef<number | null>(null)
 
   const lote = useQuery({ queryKey: llaves.lote(id), queryFn: () => obtenerLote(id) })
   const lineas = useQuery({
@@ -58,6 +72,10 @@ export function PedidoProveedor() {
     queryKey: llaves.preciosProveedor,
     queryFn: cargarPreciosProveedor,
   })
+  const baseEscalon = useQuery({
+    queryKey: llaves.configuracion('base_escalon'),
+    queryFn: () => leerConfiguracion('base_escalon'),
+  })
 
   function refrescar() {
     void clienteQuery.invalidateQueries({ queryKey: llaves.lineasDePedido(id) })
@@ -66,7 +84,7 @@ export function PedidoProveedor() {
   const pdf = useMutation({ mutationFn: descargarPdfPedido })
 
   const confirmacion = useMutation({
-    mutationFn: () => confirmarPedido(id),
+    mutationFn: () => confirmarPedido(id, totalParaConfirmar.current),
     onSuccess: (datos) => {
       setResultado(datos)
       void clienteQuery.invalidateQueries({ queryKey: llaves.lote(id) })
@@ -86,10 +104,13 @@ export function PedidoProveedor() {
   const faltanParaMinimo = Math.max(0, MINIMO_PIEZAS_PEDIDO - piezas)
 
   const listaPrecios = precios.data ?? []
+  const base = (baseEscalon.data as BaseEscalon | null) ?? 'diseno'
   // El costeo del pedido solo cuenta lo vigente; la tabla necesita todas las
-  // líneas para poder mostrar también las descartadas.
-  const costeo = costearPedido(vigentes, listaPrecios, lote.data.tipo_cambio_dia)
-  const costeoTodas = costearPedido(todas, listaPrecios, lote.data.tipo_cambio_dia)
+  // líneas para poder mostrar también las descartadas. Los escalones se
+  // resuelven sobre lo vigente: lo descartado no debería abaratar el pedido.
+  const costeo = costearPedido(vigentes, listaPrecios, lote.data.tipo_cambio_dia, base)
+  const costeoTodas = costearPedido(todas, listaPrecios, lote.data.tipo_cambio_dia, base)
+  totalParaConfirmar.current = costeo.totalUsd > 0 ? costeo.totalUsd : null
 
   const datosPedido = {
     fecha: lote.data.fecha_pedido,
@@ -177,6 +198,7 @@ export function PedidoProveedor() {
 
       <CosteoDelPedido
         costeo={costeo}
+        base={base}
         tipoCambio={lote.data.tipo_cambio_dia}
         loteId={id}
         editable={esBorrador}
@@ -257,12 +279,14 @@ export function PedidoProveedor() {
  */
 function CosteoDelPedido({
   costeo,
+  base,
   tipoCambio,
   loteId,
   editable,
   alCambiar,
 }: {
   costeo: CosteoPedido
+  base: BaseEscalon
   tipoCambio: number | null
   loteId: string
   editable: boolean
@@ -285,7 +309,7 @@ function CosteoDelPedido({
         </button>
       </div>
 
-      {abrirPrecios ? <PreciosProveedor /> : null}
+      {abrirPrecios ? <PreciosProveedor base={base} /> : null}
 
       <div className="rejilla">
         <Indicador titulo="Total en dólares" valor={formatearUSD(costeo.totalUsd)} />
@@ -369,66 +393,191 @@ function Indicador({ titulo, valor, nota }: { titulo: string; valor: string; not
 
 // ---------------------------------------------------------------------------
 
-/** Editor de los precios de compra. El proveedor los cambia cada tanto. */
-function PreciosProveedor() {
+/**
+ * Editor de la escalera de precios. El proveedor cotiza por volumen y cambia
+ * los números cada tanto, así que viven en la base y no en el código.
+ */
+function PreciosProveedor({ base }: { base: BaseEscalon }) {
   const clienteQuery = useQueryClient()
   const precios = useQuery({ queryKey: llaves.preciosProveedor, queryFn: cargarPreciosProveedor })
 
+  const [nueva, setNueva] = useState<{ categoria: Categoria; desde: string; precio: string }>({
+    categoria: 'AA',
+    desde: '',
+    precio: '',
+  })
+
+  function refrescar() {
+    void clienteQuery.invalidateQueries({ queryKey: llaves.preciosProveedor })
+  }
+
   const guardar = useMutation({
-    mutationFn: ({ categoria, precio }: { categoria: Categoria; precio: number | null }) =>
-      actualizarPrecioProveedor(categoria, precio),
+    mutationFn: ({
+      categoria,
+      desde,
+      precio,
+    }: {
+      categoria: Categoria
+      desde: number
+      precio: number
+    }) => guardarEscalonPrecio(categoria, desde, precio),
     onSuccess: () => {
-      void clienteQuery.invalidateQueries({ queryKey: llaves.preciosProveedor })
+      setNueva((previo) => ({ ...previo, desde: '', precio: '' }))
+      refrescar()
     },
   })
+
+  const borrar = useMutation({
+    mutationFn: ({ categoria, desde }: { categoria: Categoria; desde: number }) =>
+      eliminarEscalonPrecio(categoria, desde),
+    onSuccess: refrescar,
+  })
+
+  const cambiarBase = useMutation({
+    mutationFn: (valor: BaseEscalon) => guardarConfiguracion('base_escalon', valor),
+    onSuccess: () => {
+      void clienteQuery.invalidateQueries({ queryKey: llaves.configuracion('base_escalon') })
+    },
+  })
+
+  const escalones = precios.data ?? []
 
   return (
     <div style={{ marginBottom: 18 }}>
       <p className="tenue" style={{ marginTop: 0, fontSize: '0.88rem' }}>
-        Lo que te cuesta cada tipo de gorra, en dólares. Cuando el proveedor suba o baje precios,
-        cámbialos aquí y todos los pedidos en borrador se recalculan.
+        El proveedor cobra por volumen: entre más piezas, más barata cada una. Gana siempre el
+        escalón más alto que alcanza el pedido. Cuando cambie sus precios, edítalos aquí y todos
+        los borradores se recalculan.
       </p>
 
+      <Campo
+        etiqueta="Qué cantidad decide el escalón"
+        ayuda="El proveedor dijo 'producto de 30 piezas', que se puede leer de dos formas. Confírmalo con él y ajústalo aquí."
+      >
+        <select
+          value={base}
+          disabled={cambiarBase.isPending}
+          onChange={(evento) => cambiarBase.mutate(evento.target.value as BaseEscalon)}
+        >
+          {Object.entries(BASES_ESCALON).map(([valor, texto]) => (
+            <option key={valor} value={valor}>
+              {texto}
+            </option>
+          ))}
+        </select>
+      </Campo>
+
       <MensajeError error={guardar.error} />
+      <MensajeError error={borrar.error} />
 
       <div className="tabla-contenedor">
         <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th className="numero">Desde</th>
+              <th className="numero">Precio c/u</th>
+              <th />
+            </tr>
+          </thead>
           <tbody>
-            {Object.values(CATEGORIAS).map((info) => {
-              const actual =
-                (precios.data ?? []).find((precio) => precio.categoria === info.codigo) ?? null
-              return (
-                <tr key={info.codigo}>
+            {escalones.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="tenue">
+                  Sin precios capturados.
+                </td>
+              </tr>
+            ) : (
+              escalones.map((escalon) => (
+                <tr key={`${escalon.categoria}-${escalon.desde_piezas}`}>
                   <td>
-                    <strong>{info.codigo}</strong>
-                    <div className="tenue" style={{ fontSize: '0.8rem' }}>
-                      {info.etiqueta}
-                    </div>
+                    <strong>{escalon.categoria}</strong>
                   </td>
-                  <td className="numero" style={{ width: 160 }}>
+                  <td className="numero">{escalon.desde_piezas} pz</td>
+                  <td className="numero">
                     <input
                       type="number"
                       min="0"
                       step="0.01"
-                      defaultValue={actual?.precio_usd ?? ''}
-                      placeholder="USD"
+                      style={{ width: 110 }}
+                      defaultValue={escalon.precio_usd}
                       onBlur={(evento) => {
-                        const texto = evento.target.value
-                        const nuevo = texto ? Number(texto) : null
-                        if (nuevo !== (actual?.precio_usd ?? null)) {
-                          guardar.mutate({ categoria: info.codigo, precio: nuevo })
+                        const valor = Number(evento.target.value)
+                        if (valor > 0 && valor !== escalon.precio_usd) {
+                          guardar.mutate({
+                            categoria: escalon.categoria,
+                            desde: escalon.desde_piezas,
+                            precio: valor,
+                          })
                         }
                       }}
                     />
                   </td>
-                  <td className="tenue" style={{ fontSize: '0.8rem' }}>
-                    {actual?.precio_usd == null ? 'Falta que te lo pase el proveedor' : ''}
+                  <td style={{ textAlign: 'right' }}>
+                    <button
+                      type="button"
+                      className="discreto peligro"
+                      onClick={() =>
+                        borrar.mutate({
+                          categoria: escalon.categoria,
+                          desde: escalon.desde_piezas,
+                        })
+                      }
+                    >
+                      Quitar
+                    </button>
                   </td>
                 </tr>
-              )
-            })}
+              ))
+            )}
           </tbody>
         </table>
+      </div>
+
+      <div className="fila" style={{ marginTop: 12, alignItems: 'flex-end' }}>
+        <select
+          value={nueva.categoria}
+          style={{ flex: '0 1 120px' }}
+          onChange={(evento) =>
+            setNueva({ ...nueva, categoria: evento.target.value as Categoria })
+          }
+        >
+          {Object.values(CATEGORIAS).map((info) => (
+            <option key={info.codigo} value={info.codigo}>
+              {info.codigo}
+            </option>
+          ))}
+        </select>
+        <input
+          type="number"
+          min="1"
+          placeholder="Desde piezas"
+          value={nueva.desde}
+          style={{ flex: '0 1 140px' }}
+          onChange={(evento) => setNueva({ ...nueva, desde: evento.target.value })}
+        />
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Precio USD"
+          value={nueva.precio}
+          style={{ flex: '0 1 140px' }}
+          onChange={(evento) => setNueva({ ...nueva, precio: evento.target.value })}
+        />
+        <button
+          type="button"
+          disabled={!nueva.desde || !nueva.precio || guardar.isPending}
+          onClick={() =>
+            guardar.mutate({
+              categoria: nueva.categoria,
+              desde: Number(nueva.desde),
+              precio: Number(nueva.precio),
+            })
+          }
+        >
+          Agregar escalón
+        </button>
       </div>
     </div>
   )
@@ -526,13 +675,19 @@ function FilaLinea({
       </td>
       <td className="numero">
         {costeo.precioUsd === null ? (
-          <span className="insignia apartada">Sin precio</span>
+          <span className="insignia apartada">
+            {linea.categoria === null ? 'Falta el tipo' : 'Sin precio'}
+          </span>
         ) : (
           <>
             {formatearUSD(costeo.subtotalUsd)}
             <div className="tenue" style={{ fontSize: '0.78rem' }}>
               {formatearUSD(costeo.precioUsd)} c/u
-              {linea.precio_usd_unitario !== null ? ' especial' : ''}
+              {linea.precio_usd_unitario !== null
+                ? ' acordado'
+                : costeo.desdePiezas !== null
+                  ? ` · escalón de ${costeo.desdePiezas}+ (van ${costeo.piezasDelEscalon})`
+                  : ''}
             </div>
           </>
         )}

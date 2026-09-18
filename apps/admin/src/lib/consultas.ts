@@ -18,6 +18,7 @@ export const llaves = {
   unidadesDeLote: (id: string) => ['unidades-lote', id] as const,
   lineasDePedido: (id: string) => ['lineas-pedido', id] as const,
   preciosProveedor: ['precios-proveedor'] as const,
+  configuracion: (clave: string) => ['configuracion', clave] as const,
   apartados: ['apartados'] as const,
   ventas: ['ventas'] as const,
 }
@@ -470,28 +471,79 @@ export type ResultadoConfirmacion = {
 
 export type PrecioProveedor = Tables<'precios_proveedor'>
 
-/** Lo que cuesta cada tipo de gorra con el proveedor, en dólares. */
+/** La escalera de precios de compra: por tipo de gorra y por volumen. */
 export async function cargarPreciosProveedor(): Promise<PrecioProveedor[]> {
-  const { data, error } = await supabase.from('precios_proveedor').select('*')
+  const { data, error } = await supabase
+    .from('precios_proveedor')
+    .select('*')
+    .order('categoria', { ascending: true })
+    .order('desde_piezas', { ascending: true })
+
   if (error) fallar('No se pudieron cargar los precios del proveedor', error)
   return data ?? []
 }
 
-export async function actualizarPrecioProveedor(
+/** Crea o actualiza un escalón. La llave es el par categoría + desde_piezas. */
+export async function guardarEscalonPrecio(
   categoria: Categoria,
-  precioUsd: number | null,
+  desdePiezas: number,
+  precioUsd: number,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('precios_proveedor')
-    .update({ precio_usd: precioUsd, actualizado_en: new Date().toISOString() })
-    .eq('categoria', categoria)
+  const { error } = await supabase.from('precios_proveedor').upsert({
+    categoria,
+    desde_piezas: desdePiezas,
+    precio_usd: precioUsd,
+    actualizado_en: new Date().toISOString(),
+  })
 
   if (error) fallar('No se pudo guardar el precio', error)
 }
 
+export async function eliminarEscalonPrecio(
+  categoria: Categoria,
+  desdePiezas: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('precios_proveedor')
+    .delete()
+    .eq('categoria', categoria)
+    .eq('desde_piezas', desdePiezas)
+
+  if (error) fallar('No se pudo eliminar el escalón', error)
+}
+
+// ---------------------------------------------------------------------------
+// Configuración
+// ---------------------------------------------------------------------------
+
+export async function leerConfiguracion(clave: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('configuracion')
+    .select('valor')
+    .eq('clave', clave)
+    .maybeSingle()
+
+  if (error) fallar('No se pudo leer la configuración', error)
+  return data?.valor ?? null
+}
+
+export async function guardarConfiguracion(clave: string, valor: string): Promise<void> {
+  const { error } = await supabase
+    .from('configuracion')
+    .upsert({ clave, valor, actualizado_en: new Date().toISOString() })
+
+  if (error) fallar('No se pudo guardar la configuración', error)
+}
+
 /** Cierra el borrador: el lote pasa a pedido y ya se pueden capturar productos. */
-export async function confirmarPedido(loteId: string): Promise<ResultadoConfirmacion> {
-  const { data, error } = await supabase.rpc('confirmar_pedido', { p_lote_id: loteId })
+export async function confirmarPedido(
+  loteId: string,
+  totalUsd: number | null,
+): Promise<ResultadoConfirmacion> {
+  const { data, error } = await supabase.rpc('confirmar_pedido', {
+    p_lote_id: loteId,
+    p_total_usd: totalUsd,
+  })
   if (error) fallar('No se pudo confirmar el pedido', error)
   return data?.[0] ?? { confirmadas: 0, descartadas: 0, piezas: 0, total_usd: 0 }
 }

@@ -101,8 +101,21 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 **`pedido_lineas`** — el borrador de lo que se le pide al proveedor. No es inventario: el inventario nace al confirmar.
 - `id` (uuid, pk), `lote_id` (fk), `link_yupoo` (text), `categoria` (enum — define el precio de compra), `talla` (text), `cantidad` (int), `precio_usd_unitario` (numeric, null — solo si el proveedor cotizó distinto esa pieza), `estado` (enum: solicitada/confirmada/no_disponible), `nota` (text — para el proveedor), `modelo_id` (fk, se resuelve solo si el link ya existe), `unidades_creadas` (int — avance de captura), `orden` (int)
 
-**`precios_proveedor`** — lo que cuesta cada tipo de gorra, en dólares. Un renglón por categoría, porque así cotiza el proveedor. Se editan desde el pedido cuando él los cambia.
-- `categoria` (enum, pk), `precio_usd` (numeric, null mientras el proveedor no lo pase), `actualizado_en` (timestamptz), `notas` (text)
+**`precios_proveedor`** — la escalera de precios de compra. El proveedor cobra por volumen y cada categoría tiene su propia escalera. Gana siempre el escalón más alto que alcanza el pedido. Se edita desde la pantalla del pedido.
+- `categoria` + `desde_piezas` (pk compuesta), `precio_usd` (numeric), `actualizado_en` (timestamptz)
+
+Precios vigentes (dados por el proveedor el 18 de septiembre de 2026), en dólares por pieza:
+
+| Categoría | 10+ | 30+ | 50+ | 100+ |
+|---|---|---|---|---|
+| AA / AAS / K | 8.50 | 8.00 | — | 7.50 |
+| DH | 16.00 | — | 15.00 | 14.00 |
+
+UU y UUS no tienen precios: están pausadas.
+
+**`configuracion`** — ajustes del negocio que cambian sin tocar código.
+- `clave` (text, pk), `valor` (text), `descripcion` (text)
+- `base_escalon`: qué cantidad decide el escalón de precio — `diseno`, `categoria` o `pedido`. **Está en `diseno` (lectura conservadora) y falta confirmarlo con el proveedor:** dijo "producto de 30 piezas", que puede significar 30 del mismo diseño o 30 en todo el pedido.
 
 **`ventas`** — encabezado de cada venta
 - `id` (uuid, pk), `fecha`, `total_mxn`, `metodo_pago` (enum: efectivo/spei/otro), `canal` (enum: local_colotlan/local_tepatitlan/envio_nacional), `cliente_nombre`, `cliente_telefono`
@@ -135,7 +148,7 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 
 ### Seguridad (RLS)
 
-- RLS activo en las 8 tablas.
+- RLS activo en las 9 tablas.
 - El público (`anon`) solo puede: leer `catalogo_publico`, leer columnas seguras de `modelos`/`unidades` (sin costos ni datos de apartado) filtradas por `activo`/`disponible`, y ejecutar `apartar_unidad()`.
 - Cualquier usuario autenticado (el admin) tiene acceso completo a todo, vía políticas `admin_full_access`. El usuario admin se crea manualmente en Authentication → Users del dashboard de Supabase.
 - Bucket de Storage `fotos-productos`: lectura pública, solo un usuario autenticado puede subir/editar/borrar.
