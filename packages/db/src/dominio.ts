@@ -143,6 +143,7 @@ export const MINIMO_PIEZAS_PEDIDO = 10
 export const METODOS_PAGO: Record<MetodoPago, string> = {
   efectivo: 'Efectivo',
   spei: 'Transferencia SPEI',
+  tarjeta: 'Tarjeta (terminal)',
   otro: 'Otro',
 }
 

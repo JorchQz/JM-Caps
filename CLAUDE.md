@@ -53,7 +53,7 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 2. Selector de talla en la misma ficha de producto — solo aparecen las tallas realmente disponibles en stock físico (no un catálogo teórico de tallas).
 3. **Apartar:** el cliente llena nombre + teléfono → se reserva la unidad por 24h → se genera un mensaje de WhatsApp prellenado para coordinar entrega y pago.
 4. El apartado expira solo a las 24h si no se concreta (automatizado con pg_cron en Supabase, cada 15 min).
-5. Pago: efectivo o transferencia SPEI, contra entrega en persona. **No hay pago en línea todavía.**
+5. Pago: efectivo, transferencia SPEI o tarjeta con la terminal Mercado Pago Point, contra entrega en persona. **No hay pago en línea todavía.** La terminal se usa por separado: se teclea el monto ahí. Integrarla al panel es posible (API de Point: crear la orden y recibir el webhook) pero exige un backend con el access token guardado como secreto, y no se justifica hasta que el volumen lo pida.
 6. **No hay bot de WhatsApp todavía** — la atención personal es la ventaja competitiva en un pueblo chico. Se reconsidera solo si el volumen de mensajes lo justifica.
 
 ## Modelo de datos: "modelo" vs "unidad" (clave para entender el esquema)

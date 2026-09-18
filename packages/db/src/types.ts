@@ -481,7 +481,7 @@ export type Database = {
         | 'disponible'
         | 'apartada'
         | 'vendida'
-      metodo_pago: 'efectivo' | 'spei' | 'otro'
+      metodo_pago: 'efectivo' | 'spei' | 'tarjeta' | 'otro'
     }
     CompositeTypes: {
       [_ in never]: never
