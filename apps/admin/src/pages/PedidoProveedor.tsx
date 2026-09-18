@@ -37,6 +37,7 @@ import {
   type CosteoPedido,
 } from '../lib/costeoPedido'
 import { descargarPdfPedido, textoPedido } from '../lib/pedidoProveedor'
+import { consultarTipoCambio } from '../lib/tipoCambio'
 import { SelectorTalla } from '../components/SelectorTalla'
 import {
   Aviso,
@@ -300,6 +301,17 @@ function CosteoDelPedido({
     onSuccess: alCambiar,
   })
 
+  // Trae el tipo de cambio y lo deja guardado en el lote de una vez: si solo
+  // llenara el campo sin guardar, un refresh borraría el dato sin avisar.
+  const consulta = useMutation({
+    mutationFn: consultarTipoCambio,
+    onSuccess: (dato) => {
+      const redondeado = Math.round(dato.valor * 10000) / 10000
+      setValor(String(redondeado))
+      guardarCambio.mutate(redondeado)
+    },
+  })
+
   return (
     <div className="tarjeta">
       <div className="fila-separada" style={{ marginBottom: 12 }}>
@@ -335,24 +347,42 @@ function CosteoDelPedido({
       </div>
 
       <Campo
-        etiqueta="Tipo de cambio del día (MXN por dólar)"
-        ayuda="El costo en pesos es un estimado hasta que pagues: el tipo de cambio que cuenta es el del día del pago."
+        etiqueta="Tipo de cambio (MXN por dólar)"
+        ayuda="Referencia de mercado, no lo que te va a cobrar el banco: una transferencia internacional suele salir 2 o 3 por ciento más cara. Si ya sabes el tuyo, escríbelo encima."
       >
-        <input
-          type="number"
-          min="0"
-          step="0.0001"
-          value={valor}
-          placeholder="18.50"
-          disabled={!editable}
-          onChange={(evento) => setValor(evento.target.value)}
-          onBlur={() => {
-            const numero = valor ? Number(valor) : null
-            if (numero !== tipoCambio) guardarCambio.mutate(numero)
-          }}
-        />
+        <div className="fila">
+          <input
+            type="number"
+            min="0"
+            step="0.0001"
+            value={valor}
+            placeholder="18.50"
+            disabled={!editable}
+            style={{ flex: '1 1 160px' }}
+            onChange={(evento) => setValor(evento.target.value)}
+            onBlur={() => {
+              const numero = valor ? Number(valor) : null
+              if (numero !== tipoCambio) guardarCambio.mutate(numero)
+            }}
+          />
+          <button
+            type="button"
+            disabled={!editable || consulta.isPending}
+            onClick={() => consulta.mutate()}
+          >
+            {consulta.isPending ? 'Consultando' : 'Traer el del día'}
+          </button>
+        </div>
       </Campo>
 
+      {consulta.data ? (
+        <p className="tenue" style={{ marginTop: -8, fontSize: '0.82rem' }}>
+          {consulta.data.valor.toFixed(4)} al {consulta.data.fecha || 'día de hoy'} según{' '}
+          {consulta.data.fuente}.
+        </p>
+      ) : null}
+
+      <MensajeError error={consulta.error} />
       <MensajeError error={guardarCambio.error} />
 
       {costeo.piezasSinPrecio > 0 ? (

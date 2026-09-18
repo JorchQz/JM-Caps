@@ -20,7 +20,7 @@ JM Caps es una tienda de gorras (cachuchas) en Colotlán, Jalisco, México, oper
 
 - Catálogo del proveedor vía álbum de Yupoo (worldcaps.x.yupoo.com).
 - Compra mínima: 10 productos por pedido. El proveedor genera un link de pago. Envío desde China.
-- Precio en dólares, varía con el tipo de cambio del día del pedido.
+- Precio en dólares, varía con el tipo de cambio del día del pedido. El panel trae el tipo de cambio de referencia automáticamente (Frankfurter, con ExchangeRate-API de respaldo), pero es interbancario: el banco cobra 2-3% más en una transferencia internacional, así que el valor se puede sobrescribir a mano.
 - El link del álbum de cada diseño se conserva como referencia de compra (tabla `catalogo_proveedor` y campo `link_yupoo` en `modelos`, que es obligatorio), nunca se muestra al cliente.
 
 ## Categorías de producto (códigos internos)
