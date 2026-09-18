@@ -452,7 +452,7 @@ function PreciosProveedor({ base }: { base: BaseEscalon }) {
 
       <Campo
         etiqueta="Qué cantidad decide el escalón"
-        ayuda="El proveedor dijo 'producto de 30 piezas', que se puede leer de dos formas. Confírmalo con él y ajústalo aquí."
+        ayuda="El proveedor confirmó que la oferta por volumen es por diseño: para bajar de escalón hay que pedir esa cantidad del mismo modelo. Solo cámbialo si algún día lo cambia él."
       >
         <select
           value={base}

@@ -2,9 +2,9 @@ import { CATEGORIAS, type Categoria } from '@jm-caps/db'
 import type { LineaConModelo, PrecioProveedor } from './consultas'
 
 /**
- * Qué cantidad decide el escalón de precio. El proveedor cotiza por volumen,
- * pero "producto de 30 piezas" admite dos lecturas: 30 del mismo diseño o 30 en
- * todo el pedido. Se deja configurable en vez de adivinar.
+ * Qué cantidad decide el escalón de precio. El proveedor confirmó que su oferta
+ * por volumen es por diseño: para bajar de escalón hay que pedir esa cantidad
+ * del mismo modelo. Queda configurable por si algún día cambia de política.
  */
 export type BaseEscalon = 'diseno' | 'categoria' | 'pedido'
 
