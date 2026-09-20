@@ -21,13 +21,8 @@ export const TIPOS_CLIENTE: Record<Categoria, string> = {
   DH: 'Streetwear',
 }
 
-/** Los tipos que se ofrecen como filtro, sin repetir los que dicen lo mismo. */
-export const FILTROS_TIPO: Array<{ etiqueta: string; categorias: Categoria[] }> = [
-  { etiqueta: 'Con talla', categorias: ['AA', 'UU'] },
-  { etiqueta: 'Ajustables', categorias: ['AAS', 'UUS'] },
-  { etiqueta: 'Streetwear', categorias: ['DH'] },
-  { etiqueta: 'Niños', categorias: ['K'] },
-]
+/** Horas que dura un apartado. Tiene que coincidir con lo que hace la base. */
+export const HORAS_APARTADO = 24
 
 export async function cargarCatalogo(): Promise<Producto[]> {
   const { data, error } = await supabase
@@ -79,12 +74,7 @@ export async function apartar(datos: DatosApartado): Promise<string> {
 
 export function precioEnPesos(valor: number | null): string {
   if (valor === null) return ''
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(valor)
+  return '$' + new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 }).format(valor)
 }
 
 /** Número de la tienda en formato internacional, para los enlaces a WhatsApp. */

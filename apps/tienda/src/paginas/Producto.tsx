@@ -1,18 +1,20 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Categoria } from '@jm-caps/db'
 import {
+  HORAS_APARTADO,
   TIPOS_CLIENTE,
   apartar,
   cargarProducto,
   enlaceWhatsApp,
   precioEnPesos,
 } from '../lib/catalogo'
-import { compararTallas } from './Catalogo'
+import { compararTallas } from '../lib/tallas'
 
 export function Producto() {
   const { id = '' } = useParams()
+  const navegar = useNavigate()
   const clienteQuery = useQueryClient()
 
   const { data, isLoading, error } = useQuery({
@@ -22,185 +24,248 @@ export function Producto() {
 
   const [talla, setTalla] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
-  const [telefono, setTelefono] = useState('')
-  const [apartada, setApartada] = useState<{ talla: string | null } | null>(null)
+  const [wa, setWa] = useState('')
+  const [apartada, setApartada] = useState<{ talla: string | null; vence: number } | null>(null)
 
   const tallas = (data?.tallas_disponibles ?? []).slice().sort(compararTallas)
-  const llevaTalla = tallas.length > 0
+  const conTalla = tallas.length > 0
 
-  // Si solo queda una talla, no tiene caso hacer que el cliente la elija.
+  // Si solo queda una talla no tiene caso hacer que el cliente la elija.
   useEffect(() => {
     if (tallas.length === 1 && talla === null) setTalla(tallas[0] ?? null)
   }, [tallas, talla])
 
   const reserva = useMutation({
-    mutationFn: () =>
-      apartar({
-        modeloId: id,
-        talla: llevaTalla ? talla : null,
-        nombre,
-        telefono,
-      }),
+    mutationFn: () => apartar({ modeloId: id, talla: conTalla ? talla : null, nombre, telefono: wa }),
     onSuccess: () => {
-      setApartada({ talla: llevaTalla ? talla : null })
-      void clienteQuery.invalidateQueries({ queryKey: ['producto', id] })
+      setApartada({
+        talla: conTalla ? talla : null,
+        vence: Date.now() + HORAS_APARTADO * 3600000,
+      })
       void clienteQuery.invalidateQueries({ queryKey: ['catalogo'] })
+      void clienteQuery.invalidateQueries({ queryKey: ['producto', id] })
     },
   })
 
-  if (isLoading) return <p className="mensaje">Cargando...</p>
+  if (isLoading) {
+    return (
+      <div className="mensaje">
+        <div className="mensaje-titulo">Cargando</div>
+      </div>
+    )
+  }
 
+  // Que la gorra se venda mientras el cliente la mira pasa de verdad, sobre
+  // todo con las últimas piezas. Se explica sin culparlo y se le da salida.
   if (error || !data) {
     return (
       <div className="mensaje">
-        <strong>Esta gorra ya no está</strong>
-        Se vendió o se apartó. Mira lo que hay disponible ahora.
-        <p style={{ marginTop: 16 }}>
-          <Link to="/">Ver todas las gorras</Link>
+        <div className="mensaje-titulo">Esta ya voló</div>
+        <p className="mensaje-texto">
+          Alguien la apartó mientras la veías. Pasa seguido con las últimas piezas. Hay más en el
+          catálogo.
         </p>
+        <Link className="boton-mensaje" to="/">
+          Ver lo que hay
+        </Link>
       </div>
+    )
+  }
+
+  if (apartada) {
+    return (
+      <Confirmacion
+        nombreGorra={data.nombre ?? 'Tu gorra'}
+        nombreCliente={nombre.trim().split(' ')[0] ?? ''}
+        talla={apartada.talla}
+        vence={apartada.vence}
+        precio={data.precio_venta_mxn}
+        alVolver={() => navegar('/')}
+      />
     )
   }
 
   const tipo = data.categoria ? TIPOS_CLIENTE[data.categoria as Categoria] : null
+  const meta = [data.equipo, data.color].filter(Boolean).join(' · ')
   const stock = data.stock_disponible ?? 0
+  const faltaTalla = conTalla && !talla
+  const digitos = wa.replace(/\D/g, '')
+  const puedeApartar = !faltaTalla && nombre.trim().length >= 2 && digitos.length === 10
 
-  function enviar(evento: FormEvent) {
-    evento.preventDefault()
-    reserva.mutate()
-  }
-
-  if (apartada) {
-    const detalleTalla = apartada.talla ? ` talla ${apartada.talla}` : ''
-    const mensaje =
-      `Hola, soy ${nombre.trim()}. Acabo de apartar la gorra ${data.nombre}${detalleTalla} ` +
-      `en ${precioEnPesos(data.precio_venta_mxn)}. ¿Cómo quedamos para la entrega?`
-
-    return (
-      <div className="producto">
-        <section className="apartado">
-          <h2>Apartada a tu nombre</h2>
-          <p>
-            Tu {data.nombre}
-            {detalleTalla} te espera <span className="cuenta">24 horas</span>. Escríbenos por
-            WhatsApp para quedar dónde y a qué hora la recoges.
-          </p>
-          <a className="boton boton-whatsapp" href={enlaceWhatsApp(mensaje)}>
-            Escribir por WhatsApp
-          </a>
-          <p className="nota-forma">
-            Si no nos escribes hoy, la gorra regresa al catálogo automáticamente. Pagas al
-            recibirla, en efectivo, transferencia o tarjeta.
-          </p>
-        </section>
-
-        <p style={{ marginTop: 24 }}>
-          <Link to="/">Seguir viendo gorras</Link>
-        </p>
-      </div>
-    )
-  }
+  const motivo = faltaTalla
+    ? 'Elige tu talla para continuar'
+    : nombre.trim().length < 2
+      ? 'Escribe tu nombre'
+      : 'El WhatsApp va a 10 dígitos'
 
   return (
-    <div className="producto">
-      <Link className="volver" to="/">
-        Volver al catálogo
-      </Link>
+    <>
+      <div className="producto-foto">
+        {data.foto_url ? (
+          <img src={data.foto_url} alt={data.nombre ?? 'Gorra'} />
+        ) : (
+          <div className="sin-foto">foto cuadrada del producto</div>
+        )}
+        {stock <= 2 ? (
+          <span className="escasez">{stock === 1 ? 'Última pieza' : 'Quedan 2'}</span>
+        ) : null}
+      </div>
 
-      <div className="producto-caja">
-        <div className="producto-foto">
-          {data.foto_url ? (
-            <img src={data.foto_url} alt={data.nombre ?? 'Gorra'} />
-          ) : (
-            <div className="sin-foto">Foto en camino</div>
-          )}
+      <div className="producto-cabecera">
+        {tipo ? <div className="rotulo">{tipo}</div> : null}
+        <h1 className="producto-nombre">{data.nombre}</h1>
+        {meta ? <div className="producto-meta">{meta}</div> : null}
+        <div className="producto-precio">{precioEnPesos(data.precio_venta_mxn)}</div>
+        {data.descripcion ? <p className="producto-desc">{data.descripcion}</p> : null}
+      </div>
+
+      <div className="bloque-tallas">
+        {conTalla ? (
+          <>
+            <div className="rotulo-tallas">Tu talla · solo lo que hay en mano</div>
+            <div className="selector-tallas">
+              {tallas.map((valor) => (
+                <button
+                  key={valor}
+                  type="button"
+                  className="talla-boton"
+                  aria-pressed={talla === valor}
+                  onClick={() => setTalla(valor)}
+                >
+                  {valor}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="aviso-ajustable">
+            <strong>Ajustable, le queda a todos</strong>
+            <span>No necesitas elegir talla: trae broche atrás.</span>
+          </div>
+        )}
+      </div>
+
+      <form
+        className="formulario"
+        onSubmit={(evento) => {
+          evento.preventDefault()
+          reserva.mutate()
+        }}
+      >
+        <div className="formulario-titulo">Apártala {HORAS_APARTADO} horas</div>
+        <div className="formulario-nota">
+          No pagas nada ahora. Pagas cuando te la entrego en mano.
         </div>
 
-        <div>
-          <h1 className="producto-nombre">{data.nombre}</h1>
-          <p className="producto-equipo">
-            {[data.equipo, data.color, tipo].filter(Boolean).join(', ')}
-          </p>
+        <label className="etiqueta" htmlFor="jm-nombre">
+          Tu nombre
+        </label>
+        <input
+          id="jm-nombre"
+          className="campo"
+          type="text"
+          value={nombre}
+          onChange={(evento) => setNombre(evento.target.value)}
+          placeholder="Como te digan"
+          autoComplete="name"
+        />
 
-          <p className="producto-precio">{precioEnPesos(data.precio_venta_mxn)}</p>
+        <label className="etiqueta" htmlFor="jm-wa">
+          WhatsApp
+        </label>
+        <input
+          id="jm-wa"
+          className="campo campo-telefono"
+          type="tel"
+          inputMode="numeric"
+          value={wa}
+          onChange={(evento) => setWa(evento.target.value)}
+          placeholder="10 dígitos"
+          autoComplete="tel"
+        />
 
-          {data.descripcion ? <p className="producto-descripcion">{data.descripcion}</p> : null}
+        {reserva.error ? <div className="error">{(reserva.error as Error).message}</div> : null}
 
-          <div className="bloque">
-            <p className="bloque-titulo">{llevaTalla ? 'Elige tu talla' : 'Talla'}</p>
+        <button className="boton" type="submit" disabled={!puedeApartar || reserva.isPending}>
+          {reserva.isPending ? 'Apartando' : 'Apartar a mi nombre'}
+        </button>
 
-            {llevaTalla ? (
-              <div className="selector-tallas">
-                {tallas.map((valor) => (
-                  <button
-                    key={valor}
-                    type="button"
-                    className="talla-boton"
-                    aria-pressed={talla === valor}
-                    onClick={() => setTalla(valor)}
-                  >
-                    {valor}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="talla-boton talla-unica" style={{ display: 'inline-block' }}>
-                Ajustable, le queda a todos
-              </p>
-            )}
+        {!puedeApartar ? <div className="motivo">{motivo}</div> : null}
+      </form>
+    </>
+  )
+}
 
-            {stock <= 2 ? (
-              <p className="nota-forma">
-                {stock === 1 ? 'Es la última pieza.' : 'Quedan 2 piezas.'}
-              </p>
-            ) : null}
-          </div>
+// ---------------------------------------------------------------------------
 
-          <form className="formulario" onSubmit={enviar}>
-            <p className="bloque-titulo">Apártala 24 horas</p>
+function Confirmacion({
+  nombreGorra,
+  nombreCliente,
+  talla,
+  vence,
+  precio,
+  alVolver,
+}: {
+  nombreGorra: string
+  nombreCliente: string
+  talla: string | null
+  vence: number
+  precio: number | null
+  alVolver: () => void
+}) {
+  const [ahora, setAhora] = useState(() => Date.now())
 
-            {reserva.error ? <p className="error">{(reserva.error as Error).message}</p> : null}
+  // La cuenta atrás corre de verdad: el apartado vence solo, y verlo bajar es
+  // lo que empuja a escribir por WhatsApp ahora y no mañana.
+  useEffect(() => {
+    const reloj = setInterval(() => setAhora(Date.now()), 1000)
+    return () => clearInterval(reloj)
+  }, [])
 
-            <label className="campo">
-              <span>Tu nombre</span>
-              <input
-                value={nombre}
-                onChange={(evento) => setNombre(evento.target.value)}
-                autoComplete="name"
-                required
-              />
-            </label>
+  const detalleTalla = talla ? ` talla ${talla}` : ''
+  const mensaje =
+    `Hola, soy ${nombreCliente}. Acabo de apartar la gorra ${nombreGorra}${detalleTalla}` +
+    `${precio ? ` en ${precioEnPesos(precio)}` : ''}. ¿Cómo quedamos para la entrega?`
 
-            <label className="campo">
-              <span>Tu WhatsApp</span>
-              <input
-                value={telefono}
-                onChange={(evento) => setTelefono(evento.target.value)}
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="10 dígitos"
-                required
-              />
-            </label>
+  return (
+    <div className="confirmacion">
+      <img src="/logo-blanco.svg" alt="JM Caps" />
 
-            <button
-              className="boton"
-              type="submit"
-              disabled={reserva.isPending || (llevaTalla && !talla)}
-            >
-              {reserva.isPending
-                ? 'Apartando'
-                : llevaTalla && !talla
-                  ? 'Elige tu talla primero'
-                  : 'Apartar esta gorra'}
-            </button>
+      <div className="confirmacion-rotulo">Apartada</div>
+      <h1 className="confirmacion-titulo">
+        {nombreGorra}
+        <br />
+        es tuya{nombreCliente ? `, ${nombreCliente}` : ''}.
+      </h1>
+      <div className="confirmacion-nota">
+        Queda fuera del catálogo a tu nombre{detalleTalla}. Nadie más la puede apartar.
+      </div>
 
-            <p className="nota-forma">
-              No pagas nada ahora. La guardamos a tu nombre y la pagas cuando la recojas.
-            </p>
-          </form>
+      <div className="cuenta-atras">
+        <div className="cuenta-atras-rotulo">Te quedan</div>
+        <div className="cuenta-atras-cifra">{tiempoRestante(vence, ahora)}</div>
+        <div className="cuenta-atras-nota">
+          Si no me escribes en ese tiempo, la gorra regresa al catálogo.
         </div>
       </div>
+
+      <a className="boton-whatsapp" href={enlaceWhatsApp(mensaje)}>
+        Escribir por WhatsApp
+      </a>
+      <div className="pie-confirmacion">Se abre el chat con el mensaje ya escrito.</div>
+
+      <button type="button" className="boton-fantasma" onClick={alVolver}>
+        Seguir viendo el catálogo
+      </button>
     </div>
   )
+}
+
+function tiempoRestante(vence: number, ahora: number): string {
+  const ms = Math.max(0, vence - ahora)
+  const horas = Math.floor(ms / 3600000)
+  const minutos = Math.floor((ms % 3600000) / 60000)
+  const segundos = Math.floor((ms % 60000) / 1000)
+  const dosDigitos = (valor: number) => String(valor).padStart(2, '0')
+  return `${dosDigitos(horas)}:${dosDigitos(minutos)}:${dosDigitos(segundos)}`
 }

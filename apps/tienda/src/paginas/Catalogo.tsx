@@ -3,100 +3,102 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import type { Categoria } from '@jm-caps/db'
 import {
-  FILTROS_TIPO,
+  TIPOS_CLIENTE,
   cargarCatalogo,
+  enlaceWhatsApp,
   precioEnPesos,
   type Producto,
 } from '../lib/catalogo'
+import { compararTallas } from '../lib/tallas'
+
+const TEXTO_ENTREGA =
+  'Todas están físicamente en mano. La apartas hoy y te la entrego hoy mismo en Colotlán.'
+
+type Filtros = { tipo: string | null; talla: string | null; equipo: string | null }
 
 export function Catalogo() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['catalogo'],
     queryFn: cargarCatalogo,
   })
 
-  const [tipo, setTipo] = useState<string | null>(null)
-  const [talla, setTalla] = useState<string | null>(null)
-  const [equipo, setEquipo] = useState<string | null>(null)
-
+  const [filtros, setFiltros] = useState<Filtros>({ tipo: null, talla: null, equipo: null })
   const productos = data ?? []
 
-  // Los filtros se arman con lo que de verdad hay en existencia. Ofrecer una
-  // talla que nadie tiene solo lleva al cliente a una pantalla vacía.
-  const tallasDisponibles = useMemo(() => {
-    const juego = new Set<string>()
-    for (const producto of productos) {
-      for (const valor of producto.tallas_disponibles ?? []) juego.add(valor)
-    }
-    return [...juego].sort(compararTallas)
-  }, [productos])
+  // Los filtros se arman con lo que de verdad hay: ofrecer una talla que nadie
+  // tiene solo lleva al cliente a una pantalla vacía.
+  const opciones = useMemo(() => {
+    const tipos: string[] = []
+    const tallas: string[] = []
+    const equipos: string[] = []
 
-  const equiposDisponibles = useMemo(() => {
-    const juego = new Set<string>()
     for (const producto of productos) {
-      if (producto.equipo) juego.add(producto.equipo)
+      const tipo = producto.categoria ? TIPOS_CLIENTE[producto.categoria as Categoria] : null
+      if (tipo && !tipos.includes(tipo)) tipos.push(tipo)
+      if (producto.equipo && !equipos.includes(producto.equipo)) equipos.push(producto.equipo)
+      for (const talla of producto.tallas_disponibles ?? []) {
+        if (!tallas.includes(talla)) tallas.push(talla)
+      }
     }
-    return [...juego].sort((a, b) => a.localeCompare(b, 'es'))
-  }, [productos])
 
-  const tiposDisponibles = useMemo(
-    () =>
-      FILTROS_TIPO.filter((filtro) =>
-        productos.some(
-          (producto) =>
-            producto.categoria && filtro.categorias.includes(producto.categoria as Categoria),
-        ),
-      ),
-    [productos],
-  )
+    return {
+      tipos,
+      tallas: tallas.sort(compararTallas),
+      equipos: equipos.sort((a, b) => a.localeCompare(b, 'es')),
+    }
+  }, [productos])
 
   const visibles = useMemo(
     () =>
       productos.filter((producto) => {
-        if (tipo) {
-          const filtro = FILTROS_TIPO.find((opcion) => opcion.etiqueta === tipo)
-          if (
-            !filtro ||
-            !producto.categoria ||
-            !filtro.categorias.includes(producto.categoria as Categoria)
-          ) {
-            return false
-          }
+        const tipo = producto.categoria ? TIPOS_CLIENTE[producto.categoria as Categoria] : null
+        if (filtros.tipo && tipo !== filtros.tipo) return false
+        if (filtros.equipo && producto.equipo !== filtros.equipo) return false
+        if (filtros.talla && !(producto.tallas_disponibles ?? []).includes(filtros.talla)) {
+          return false
         }
-        if (talla && !(producto.tallas_disponibles ?? []).includes(talla)) return false
-        if (equipo && producto.equipo !== equipo) return false
         return true
       }),
-    [productos, tipo, talla, equipo],
+    [productos, filtros],
   )
 
-  const hayFiltros = Boolean(tipo || talla || equipo)
   const piezas = productos.reduce((suma, producto) => suma + (producto.stock_disponible ?? 0), 0)
+  const hayFiltros = Boolean(filtros.tipo || filtros.talla || filtros.equipo)
 
-  function limpiar() {
-    setTipo(null)
-    setTalla(null)
-    setEquipo(null)
+  function alternar(campo: keyof Filtros, valor: string) {
+    setFiltros((previo) => ({ ...previo, [campo]: previo[campo] === valor ? null : valor }))
   }
+
+  if (isLoading) return <Esqueleto />
 
   if (error) {
     return (
-      <p className="mensaje">
-        <strong>No cargó el catálogo</strong>
-        Revisa tu conexión y vuelve a intentar.
-      </p>
+      <div className="mensaje">
+        <div className="mensaje-titulo">No cargó el catálogo</div>
+        <p className="mensaje-texto">
+          Se cortó la conexión antes de traer las gorras. Revisa tus datos y vuelve a intentar.
+        </p>
+        <button type="button" className="boton-mensaje oscuro" onClick={() => void refetch()}>
+          Reintentar
+        </button>
+      </div>
     )
-  }
-
-  if (isLoading) {
-    return <p className="mensaje">Cargando gorras...</p>
   }
 
   if (productos.length === 0) {
     return (
       <div className="mensaje">
-        <strong>Estamos surtiendo</strong>
-        Ahorita no hay gorras en existencia. Vuelve en unos días.
+        <div className="mensaje-titulo">Se está surtiendo</div>
+        <p className="mensaje-texto">
+          Ahorita no hay piezas en mano. Llega mercancía cada semana; escríbeme y te aviso en
+          cuanto baje la caja.
+        </p>
+        <a
+          className="boton-mensaje"
+          href={enlaceWhatsApp('Hola, avísame cuando llegue mercancía nueva.')}
+        >
+          Avísame por WhatsApp
+        </a>
       </div>
     )
   }
@@ -104,70 +106,56 @@ export function Catalogo() {
   return (
     <>
       <section className="portada">
-        <h1 className="portada-conteo">
-          {piezas} {piezas === 1 ? 'gorra lista' : 'gorras listas'} hoy
-        </h1>
-        <p className="portada-nota">
-          Todas están aquí, físicamente. Apartas la tuya y la recoges el mismo día en Colotlán o
-          Tepatitlán.
-        </p>
-      </section>
-
-      <section className="filtros" aria-label="Filtros">
-        <div className="filtros-carril">
-          {tiposDisponibles.map((filtro) => (
-            <button
-              key={filtro.etiqueta}
-              type="button"
-              className="ficha"
-              aria-pressed={tipo === filtro.etiqueta}
-              onClick={() => setTipo(tipo === filtro.etiqueta ? null : filtro.etiqueta)}
-            >
-              {filtro.etiqueta}
-            </button>
-          ))}
-
-          {tallasDisponibles.map((valor) => (
-            <button
-              key={valor}
-              type="button"
-              className="ficha"
-              aria-pressed={talla === valor}
-              onClick={() => setTalla(talla === valor ? null : valor)}
-            >
-              Talla {valor}
-            </button>
-          ))}
-
-          {equiposDisponibles.map((valor) => (
-            <button
-              key={valor}
-              type="button"
-              className="ficha"
-              aria-pressed={equipo === valor}
-              onClick={() => setEquipo(equipo === valor ? null : valor)}
-            >
-              {valor}
-            </button>
-          ))}
-        </div>
-
-        {hayFiltros ? (
-          <div className="filtros-resumen">
-            <span>
-              {visibles.length} {visibles.length === 1 ? 'modelo' : 'modelos'}
-            </span>
-            <button type="button" className="enlace-limpiar" onClick={limpiar}>
-              Quitar filtros
-            </button>
+        <div className="portada-cifra">
+          <div className="portada-conteo">{piezas}</div>
+          <div className="portada-titulo">
+            {piezas === 1 ? 'gorra lista hoy' : 'gorras listas hoy'}
           </div>
-        ) : null}
+        </div>
+        <p className="portada-nota">{TEXTO_ENTREGA}</p>
       </section>
+
+      <nav className="filtros" aria-label="Filtros">
+        {opciones.tipos.map((valor) => (
+          <Ficha
+            key={valor}
+            etiqueta={valor}
+            activa={filtros.tipo === valor}
+            alTocar={() => alternar('tipo', valor)}
+          />
+        ))}
+        {opciones.tallas.map((valor) => (
+          <Ficha
+            key={valor}
+            etiqueta={valor}
+            activa={filtros.talla === valor}
+            alTocar={() => alternar('talla', valor)}
+          />
+        ))}
+        {opciones.equipos.map((valor) => (
+          <Ficha
+            key={valor}
+            etiqueta={valor}
+            activa={filtros.equipo === valor}
+            alTocar={() => alternar('equipo', valor)}
+          />
+        ))}
+      </nav>
 
       {visibles.length === 0 ? (
         <div className="mensaje">
-          <strong>Nada con esos filtros</strong>
-          Prueba con otra talla, o quita los filtros para ver todo lo que hay.
+          <div className="mensaje-titulo">Nada con esos filtros</div>
+          <p className="mensaje-texto">
+            Quita uno y vuelve a ver: hay {piezas} {piezas === 1 ? 'gorra' : 'gorras'} en mano
+            ahorita.
+          </p>
+          <button
+            type="button"
+            className="boton-mensaje"
+            onClick={() => setFiltros({ tipo: null, talla: null, equipo: null })}
+          >
+            Quitar filtros
+          </button>
         </div>
       ) : (
         <div className="rejilla">
@@ -176,37 +164,77 @@ export function Catalogo() {
           ))}
         </div>
       )}
+
+      {hayFiltros && visibles.length > 0 ? (
+        <p style={{ margin: '0 16px 24px', fontSize: 13, color: 'var(--tinta-suave)' }}>
+          {visibles.length} {visibles.length === 1 ? 'modelo' : 'modelos'} con esos filtros.{' '}
+          <button
+            type="button"
+            onClick={() => setFiltros({ tipo: null, talla: null, equipo: null })}
+            style={{
+              background: 'none',
+              border: 0,
+              padding: 0,
+              color: 'var(--cobalto)',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              font: 'inherit',
+            }}
+          >
+            Quitar filtros
+          </button>
+        </p>
+      ) : null}
     </>
+  )
+}
+
+function Ficha({
+  etiqueta,
+  activa,
+  alTocar,
+}: {
+  etiqueta: string
+  activa: boolean
+  alTocar: () => void
+}) {
+  return (
+    <button type="button" className="ficha" aria-pressed={activa} onClick={alTocar}>
+      {etiqueta}
+    </button>
   )
 }
 
 function Tarjeta({ producto }: { producto: Producto }) {
   const tallas = (producto.tallas_disponibles ?? []).slice().sort(compararTallas)
   const stock = producto.stock_disponible ?? 0
+  const tipo = producto.categoria ? TIPOS_CLIENTE[producto.categoria as Categoria] : null
+  const meta = [producto.color, tipo].filter(Boolean).join(' · ')
 
   return (
     <Link className="tarjeta" to={`/gorra/${producto.modelo_id}`}>
-      <div className="tarjeta-foto">
+      <div className="marco-foto">
         {producto.foto_url ? (
           <img src={producto.foto_url} alt={producto.nombre ?? 'Gorra'} loading="lazy" />
         ) : (
-          <div className="sin-foto">Foto en camino</div>
+          <div className="sin-foto">sin foto</div>
         )}
-        {stock === 1 ? <span className="marca-ultima">Última</span> : null}
-        {stock === 2 ? <span className="marca-ultima">Quedan 2</span> : null}
+        {stock <= 2 ? (
+          <span className="escasez">{stock === 1 ? 'Última pieza' : 'Quedan 2'}</span>
+        ) : null}
       </div>
 
       <div className="tarjeta-cuerpo">
         <div className="tarjeta-nombre">{producto.nombre}</div>
-        {producto.color ? <div className="tarjeta-detalle">{producto.color}</div> : null}
-        <div className="precio">{precioEnPesos(producto.precio_venta_mxn)}</div>
+        {meta ? <div className="tarjeta-meta">{meta}</div> : null}
+        <div className="tarjeta-precio">{precioEnPesos(producto.precio_venta_mxn)}</div>
 
-        <div className="tallas">
+        <div className="tallas-lista">
           {tallas.length === 0 ? (
-            <span className="talla talla-ajustable">Ajustable</span>
+            <span className="talla-ajustable">Ajustable</span>
           ) : (
             tallas.map((valor) => (
-              <span className="talla" key={valor}>
+              <span className="talla-mini" key={valor}>
                 {valor}
               </span>
             ))
@@ -217,18 +245,30 @@ function Tarjeta({ producto }: { producto: Producto }) {
   )
 }
 
-/** Ordena 7, 7 1/8, 7 1/4... como números, no como texto. */
-export function compararTallas(a: string, b: string): number {
-  return valorDeTalla(a) - valorDeTalla(b)
-}
-
-function valorDeTalla(talla: string): number {
-  const [entero, fraccion] = talla.trim().split(' ')
-  const base = Number(entero)
-  if (Number.isNaN(base)) return Number.POSITIVE_INFINITY
-  if (!fraccion) return base
-
-  const [arriba, abajo] = fraccion.split('/').map(Number)
-  if (!arriba || !abajo) return base
-  return base + arriba / abajo
+/** Mientras carga se muestra la forma de la pantalla, no un texto de espera. */
+function Esqueleto() {
+  return (
+    <>
+      <div className="esqueleto-titulo" />
+      <div className="rejilla">
+        {[0, 1, 2, 3].map((indice) => (
+          <div
+            key={indice}
+            style={{
+              background: 'var(--nieve)',
+              border: '1px solid var(--gris-hondo)',
+              borderRadius: 10,
+              overflow: 'hidden',
+            }}
+          >
+            <div className="brillo" style={{ aspectRatio: '1 / 1' }} />
+            <div style={{ padding: 8 }}>
+              <div className="esqueleto-linea" />
+              <div className="esqueleto-linea corta" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
 }
