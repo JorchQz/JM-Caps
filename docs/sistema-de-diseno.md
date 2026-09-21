@@ -153,13 +153,14 @@ todos", "No pagas nada ahora".
 
 ### Páginas de texto largo
 
-Los documentos legales y explicativos usan el componente , que les
+Los documentos legales y explicativos usan el componente `Documento`, que les
 da medida de línea legible y un resumen arriba: casi nadie lee un documento
 legal completo, así que la primera línea dice lo que de verdad importa.
 
 Los datos del negocio que aparecen en ellos viven en
-[](../apps/tienda/src/lib/legales.ts), no
-repartidos por el texto. Cambiar el correo o el domicilio se hace en un lugar.
+[`apps/tienda/src/lib/legales.ts`](../apps/tienda/src/lib/legales.ts), no
+repartidos por el texto. Cambiar el correo o el domicilio se hace en un solo
+lugar.
 
 ### Marca
 
