@@ -190,7 +190,7 @@ Todo dato o número que aparezca en esos documentos va en `legales.ts`, nunca es
 
 **Antes de construir cualquier pantalla nueva, lee [`docs/sistema-de-diseno.md`](docs/sistema-de-diseno.md).** Ahí está qué colores significan qué, qué componentes ya existen para reutilizar, las reglas de movimiento, la voz de los textos y los estados que toda pantalla debe cubrir. Los valores exactos viven en los CSS de cada app, no duplicados en el documento.
 
-Son dos sistemas distintos a propósito y no se deben unificar: la tienda es clara, con foto protagonista y acento cobalto; el panel es oscuro, denso y con acento ámbar. El diseño de la tienda salió de Claude Design y el prototipo original está en `docs/Claude Design/`.
+Tienda y panel comparten paleta, tipografía y logo: los tokens viven en `packages/ui` y los importan las dos apps. Lo que cambia entre ellas es la densidad, no el color. El diseño salió de Claude Design y el prototipo original está en `docs/Claude Design/`.
 
 ## Preferencias
 

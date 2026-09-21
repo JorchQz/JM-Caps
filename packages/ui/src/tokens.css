@@ -1,0 +1,47 @@
+/*
+  Paleta y tipografía de JM Caps, compartidas por la tienda y el panel.
+
+  Viven aquí y no en cada app porque son la marca: si se duplicaran, un día el
+  panel tendría un azul y la tienda otro, y el negocio se vería como dos cosas
+  distintas.
+
+  Los nombres describen el material, no el uso. Cada app les asigna
+  significado en su propio CSS.
+*/
+
+:root {
+  /* Fondo: el gris de la visera interior de una gorra. */
+  --gris: #dcdad5;
+  --gris-hondo: #c9c6c0;
+
+  /* Tinta: texto y superficies oscuras que enmarcan. */
+  --tinta: #16181a;
+  --tinta-suave: #5c6066;
+  --tinta-tenue: #8b8f94;
+
+  /* Blanco puro, reservado a las superficies donde vive el contenido. */
+  --nieve: #ffffff;
+  --hueso: #f1efeb;
+
+  /* Cobalto es la acción. Uno por pantalla. */
+  --cobalto: #1f44d8;
+  --cobalto-hondo: #1b39b4;
+  --cobalto-claro: #8fa3f0;
+
+  /* Rojo solo para escasez real o algo destructivo. Nunca decorativo. */
+  --ultima: #c5301f;
+  --ultima-fondo: #fbedeb;
+
+  /* Estados, calibrados para leerse sobre fondo claro. */
+  --exito: #1d7a4d;
+  --alerta: #a35a12;
+
+  --borde: #b9b6af;
+  --borde-claro: #edebe7;
+  --linea-oscura: #3a3e44;
+
+  --fuente: Archivo, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --fuente-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  color-scheme: light;
+}

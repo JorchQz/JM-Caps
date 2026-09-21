@@ -1,3 +1,5 @@
+@import '@jm-caps/ui/tokens.css';
+
 /*
   JM Caps — tienda pública.
   Estilos portados del diseño de Claude Design.
@@ -7,24 +9,6 @@
   escasez real: si se usara para decorar, dejaría de significar algo.
 */
 
-:root {
-  --gris: #dcdad5;
-  --gris-hondo: #c9c6c0;
-  --tinta: #16181a;
-  --tinta-suave: #5c6066;
-  --tinta-tenue: #8b8f94;
-  --nieve: #ffffff;
-  --hueso: #f1efeb;
-  --cobalto: #1f44d8;
-  --cobalto-hondo: #1b39b4;
-  --ultima: #c5301f;
-  --ultima-fondo: #fbedeb;
-  --borde: #b9b6af;
-  --borde-claro: #edebe7;
-  --linea-oscura: #3a3e44;
-
-  color-scheme: light;
-}
 
 *,
 *::before,
@@ -40,7 +24,7 @@ body {
   margin: 0;
   background: var(--gris);
   color: var(--tinta);
-  font-family: Archivo, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--fuente);
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

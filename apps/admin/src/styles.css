@@ -1,18 +1,29 @@
+@import '@jm-caps/ui/tokens.css';
+
+/*
+  Panel de administración.
+
+  Usa la misma paleta y tipografía que la tienda: es el mismo negocio y no
+  tiene por qué verse como dos productos. Lo que sí cambia es la densidad —
+  aquí caben tablas largas y se captura rápido — y que la barra lateral es
+  oscura, igual que el encabezado de la tienda, para enmarcar el trabajo.
+
+  Los nombres semánticos de abajo apuntan a los tokens de marca: si mañana
+  cambia el azul, cambia en un solo lugar y las dos apps lo toman.
+*/
+
 :root {
-  --fondo: #0f1115;
-  --superficie: #171a21;
-  --superficie-alta: #1f232c;
-  --borde: #2b3140;
-  --texto: #e8eaf0;
-  --texto-tenue: #98a1b3;
-  --acento: #e0b341;
-  --acento-texto: #17191f;
-  --exito: #58c08a;
-  --alerta: #e0854a;
-  --error: #e8615f;
-  --radio: 10px;
-  --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.25);
-  color-scheme: dark;
+  --fondo: var(--gris);
+  --superficie: var(--nieve);
+  --superficie-alta: var(--hueso);
+  --texto: var(--tinta);
+  --texto-tenue: var(--tinta-suave);
+  --acento: var(--cobalto);
+  --acento-hondo: var(--cobalto-hondo);
+  --acento-texto: var(--nieve);
+  --error: var(--ultima);
+  --radio: 8px;
+  --sombra: 0 1px 2px rgba(22, 24, 26, 0.06), 0 8px 24px rgba(22, 24, 26, 0.06);
 }
 
 * {
@@ -29,7 +40,7 @@ body {
   margin: 0;
   background: var(--fondo);
   color: var(--texto);
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--fuente);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -69,8 +80,9 @@ a {
 .barra-lateral {
   width: 220px;
   flex: 0 0 220px;
-  background: var(--superficie);
-  border-right: 1px solid var(--borde);
+  background: var(--tinta);
+  color: var(--nieve);
+  border-right: 1px solid var(--tinta);
   padding: 20px 14px;
   display: flex;
   flex-direction: column;
@@ -101,25 +113,25 @@ a {
   padding: 9px 12px;
   border-radius: var(--radio);
   text-decoration: none;
-  color: var(--texto-tenue);
+  color: var(--gris-hondo);
   font-size: 0.94rem;
 }
 
 .navegacion a:hover {
-  background: var(--superficie-alta);
-  color: var(--texto);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--nieve);
 }
 
 .navegacion a.activo {
-  background: var(--superficie-alta);
-  color: var(--texto);
-  box-shadow: inset 2px 0 0 var(--acento);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--nieve);
+  box-shadow: inset 2px 0 0 var(--cobalto-claro);
 }
 
 .pie-sesion {
   margin-top: auto;
   font-size: 0.82rem;
-  color: var(--texto-tenue);
+  color: var(--tinta-tenue);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -205,7 +217,7 @@ a {
 input,
 select,
 textarea {
-  background: var(--fondo);
+  background: var(--nieve);
   border: 1px solid var(--borde);
   border-radius: 8px;
   color: var(--texto);
@@ -237,7 +249,12 @@ button {
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--texto-tenue);
+  border-color: var(--texto);
+}
+
+button.principal:hover:not(:disabled) {
+  background: var(--acento-hondo);
+  border-color: var(--acento-hondo);
 }
 
 button:disabled {
@@ -265,7 +282,7 @@ button.discreto {
 
 button.discreto:hover:not(:disabled) {
   color: var(--texto);
-  background: var(--superficie-alta);
+  background: var(--hueso);
 }
 
 /* ---------------------------------------------------------------- tablas */
@@ -334,8 +351,8 @@ tr:last-child td {
 
 .insignia.pedido,
 .insignia.en_transito {
-  color: #7aa7e8;
-  border-color: rgba(122, 167, 232, 0.45);
+  color: var(--cobalto);
+  border-color: color-mix(in srgb, var(--cobalto) 40%, transparent);
 }
 
 .insignia.acento {
@@ -373,7 +390,7 @@ tr:last-child td {
 }
 
 .mono {
-  font-family: 'Cascadia Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: var(--fuente-mono);
   font-size: 0.85em;
 }
 
@@ -545,4 +562,11 @@ tr:last-child td {
   .etiqueta {
     border-color: #999;
   }
+}
+
+/* El logo de marca reemplaza al texto en la barra lateral. */
+.marca-logo {
+  height: 30px;
+  width: auto;
+  display: block;
 }

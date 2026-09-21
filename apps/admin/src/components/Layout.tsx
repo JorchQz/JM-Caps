@@ -16,9 +16,7 @@ export function Layout() {
   return (
     <div className="marco">
       <aside className="barra-lateral no-imprimir">
-        <div className="marca">
-          JM <span>Caps</span>
-        </div>
+        <img className="marca-logo" src="/logo-blanco.svg" alt="JM Caps" />
 
         <nav className="navegacion">
           {SECCIONES.map((seccion) => (

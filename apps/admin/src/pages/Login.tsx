@@ -32,9 +32,11 @@ export function Login() {
   return (
     <div className="pantalla-login">
       <form className="caja-login tarjeta" onSubmit={(evento) => void entrar(evento)}>
-        <div className="marca" style={{ marginBottom: 6 }}>
-          JM <span>Caps</span>
-        </div>
+        <img
+          src="/logo-negro.svg"
+          alt="JM Caps"
+          style={{ height: 34, width: 'auto', marginBottom: 10 }}
+        />
         <p className="tenue" style={{ marginTop: 0, marginBottom: 20, fontSize: '0.9rem' }}>
           Panel de administración
         </p>

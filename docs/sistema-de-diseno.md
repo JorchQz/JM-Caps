@@ -4,8 +4,9 @@ Para no volver a decidir lo mismo cada vez que se agrega una pantalla. Si vas a
 construir algo nuevo, lee esto antes y reutiliza lo que ya existe.
 
 **Los valores exactos viven en el CSS, no aquí.** Este documento explica las
-decisiones y cuándo aplicar cada cosa; los hex y las medidas se leen de:
+decisiones y cuándo aplicar cada cosa; los hex se leen de:
 
+- Paleta y tipografía de marca: [`packages/ui/src/tokens.css`](../packages/ui/src/tokens.css)
 - Tienda pública: [`apps/tienda/src/estilos.css`](../apps/tienda/src/estilos.css)
 - Panel de administración: [`apps/admin/src/styles.css`](../apps/admin/src/styles.css)
 
@@ -13,21 +14,31 @@ Si un valor se copiara aquí, tarde o temprano diría algo distinto al código.
 
 ---
 
-## Son dos sistemas distintos, a propósito
+## Una sola marca, dos densidades
 
-No los unifiques.
+Tienda y panel **comparten paleta, tipografía y logo**, porque son el mismo
+negocio. Los tokens viven en `packages/ui` y los importan las dos apps: si
+cambia el azul, cambia en un lugar.
+
+Lo que sí difiere es la densidad, y eso es cuestión de espaciado, no de color:
 
 | | Tienda pública | Panel de administración |
 |---|---|---|
-| Quién la usa | Clientes, casi siempre en celular con datos | Solo Iván, celular y computadora |
-| Ánimo | Claro, de producto, con foto protagonista | Oscuro, denso, de herramienta de trabajo |
-| Fondo | Gris jaspeado claro | Casi negro |
-| Acento | Cobalto para la acción | Ámbar |
-| Tipografía | Archivo, con eje de ancho | La del sistema |
+| Quién la usa | Clientes, casi siempre en celular con datos | Solo el administrador |
 | Prioridad | Que se vea el producto y se entienda rápido | Que quepa mucha información y se capture rápido |
+| Densidad | Aire, una acción por pantalla | Tablas largas, varias acciones por fila |
+| Tipografía | Archivo expandida en tallas y precios | Archivo normal, tamaños más chicos |
 
-Un panel bonito pero lento de capturar es un mal panel. Una tienda densa pero
-completa es una mala tienda. Por eso no comparten estilos.
+Las zonas oscuras enmarcan en las dos: en la tienda son el encabezado, el pie
+y la confirmación; en el panel es la barra lateral. El resto es gris con
+superficies blancas.
+
+El panel traduce los tokens de marca a nombres semánticos en su propio
+`:root` (`--fondo`, `--superficie`, `--acento`). Así conserva su vocabulario
+sin duplicar ni un color.
+
+Un panel bonito pero lento de capturar sigue siendo un mal panel: **si algo
+del diseño de la tienda estorba para trabajar rápido, gana el trabajo.**
 
 ---
 
@@ -176,12 +187,14 @@ datos. Es una decisión legal, no estética.
 
 ## Panel de administración
 
-Es una herramienta de trabajo y se diseña como tal: fondo `--fondo` casi negro,
-superficies apiladas (`--superficie`, `--superficie-alta`) para separar bloques
-sin líneas de más, y `--acento` ámbar solo en la acción principal.
+Usa la misma paleta que la tienda, con nombres semánticos propios: `--fondo` es
+el gris, `--superficie` el blanco de las tarjetas, `--acento` el cobalto de la
+acción principal. La barra lateral es oscura, igual que el encabezado de la
+tienda.
 
-Los colores de estado sí tienen significado fijo: `--exito` para disponible,
-`--alerta` para apartado, `--error` para lo destructivo.
+Los colores de estado tienen significado fijo: `--exito` para disponible,
+`--alerta` para apartado, `--error` para lo destructivo. Están calibrados para
+leerse sobre fondo claro, que es distinto de lo que pedía el fondo oscuro.
 
 Componentes disponibles: `.tarjeta`, `.rejilla`, `.fila`, `.fila-separada`,
 `.campo`, `.insignia` (con modificadores por estado), `.aviso`,
