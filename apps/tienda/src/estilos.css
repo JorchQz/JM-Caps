@@ -217,13 +217,24 @@ input {
 .filtros {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   padding: 12px 0 14px;
   border-bottom: 1px solid var(--borde);
 }
 
+/*
+  El rotulo va dentro de la fila y se queda pegado a la izquierda mientras
+  los chips se deslizan por debajo. Si se fuera con el scroll, a mitad de
+  una fila de veinte equipos ya no se sabria que se esta eligiendo.
+*/
 .filtros-rotulo {
-  padding: 0 16px 4px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  flex: 0 0 auto;
+  align-self: center;
+  padding-right: 10px;
+  background: var(--gris);
   font-size: 11px;
   font-weight: 700;
   font-stretch: 112%;
@@ -234,6 +245,7 @@ input {
 
 .filtros-fila {
   display: flex;
+  align-items: center;
   gap: 8px;
   padding: 0 16px;
   overflow-x: auto;
@@ -263,10 +275,8 @@ input {
     padding: 16px 0 18px;
   }
 
-  .filtros-rotulo,
   .limpiar-filtros {
     padding-left: 28px;
-    padding-right: 28px;
   }
 
   .limpiar-filtros {
@@ -278,6 +288,11 @@ input {
     flex-wrap: wrap;
     overflow-x: visible;
     padding: 0 28px;
+  }
+
+  .filtros-rotulo {
+    position: static;
+    min-width: 62px;
   }
 }
 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import type { Categoria } from '@jm-caps/db'
 import {
-  TIPOS_CLIENTE,
+  ESTILO,
   cargarCatalogo,
   enlaceWhatsApp,
   precioEnPesos,
@@ -106,34 +106,40 @@ export function Catalogo() {
           const ocultas = grupo.opciones.length - alaVista.length
 
           return (
-            <div className="filtros-grupo" key={grupo.dimension}>
+            // El rotulo va dentro de la fila y pegado a la izquierda: con cinco
+            // dimensiones, ponerlo encima de cada una duplicaria la altura del
+            // bloque y empujaria las gorras fuera de la primera pantalla.
+            <div
+              className="filtros-fila"
+              key={grupo.dimension}
+              role="group"
+              aria-labelledby={`rotulo-${grupo.dimension}`}
+            >
               <div className="filtros-rotulo" id={`rotulo-${grupo.dimension}`}>
                 {ROTULOS[grupo.dimension]}
               </div>
 
-              <div className="filtros-fila" role="group" aria-labelledby={`rotulo-${grupo.dimension}`}>
-                {alaVista.map((opcion) => (
-                  <Ficha
-                    key={opcion.valor}
-                    etiqueta={opcion.valor}
-                    cuantas={opcion.cuantas}
-                    activa={estaActivo(filtros, grupo.dimension, opcion.valor)}
-                    alTocar={() =>
-                      setFiltros((previo) => alternar(previo, grupo.dimension, opcion.valor))
-                    }
-                  />
-                ))}
+              {alaVista.map((opcion) => (
+                <Ficha
+                  key={opcion.valor}
+                  etiqueta={opcion.valor}
+                  cuantas={opcion.cuantas}
+                  activa={estaActivo(filtros, grupo.dimension, opcion.valor)}
+                  alTocar={() =>
+                    setFiltros((previo) => alternar(previo, grupo.dimension, opcion.valor))
+                  }
+                />
+              ))}
 
-                {recortado ? (
-                  <button
-                    type="button"
-                    className="ficha ficha-mas"
-                    onClick={() => setAbiertos((previo) => [...previo, grupo.dimension])}
-                  >
-                    {ocultas} más
-                  </button>
-                ) : null}
-              </div>
+              {recortado ? (
+                <button
+                  type="button"
+                  className="ficha ficha-mas"
+                  onClick={() => setAbiertos((previo) => [...previo, grupo.dimension])}
+                >
+                  {ocultas} más
+                </button>
+              ) : null}
             </div>
           )
         })}
@@ -198,8 +204,9 @@ function Ficha({
 function Tarjeta({ producto }: { producto: Producto }) {
   const tallas = (producto.tallas_disponibles ?? []).slice().sort(compararTallas)
   const stock = producto.stock_disponible ?? 0
-  const tipo = producto.categoria ? TIPOS_CLIENTE[producto.categoria as Categoria] : null
-  const meta = [producto.color, tipo].filter(Boolean).join(' · ')
+  // El ajuste no va en la meta: los chips de talla de abajo ya lo dicen.
+  const estilo = producto.categoria ? ESTILO[producto.categoria as Categoria] : null
+  const meta = [producto.color, estilo].filter(Boolean).join(' · ')
   const precios = preciosDe(producto)
 
   return (

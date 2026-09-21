@@ -155,8 +155,9 @@ terminada sin resolverlos:
 - Una pantalla vacía es una invitación a actuar, no un lamento.
 - El botón dice lo que va a pasar: "Apartar a mi nombre", no "Enviar".
 - **Los códigos internos AA, AAS, UU, UUS, K y DH jamás se le muestran al
-  cliente.** Se traducen con `TIPOS_CLIENTE` en
-  [`apps/tienda/src/lib/catalogo.ts`](../apps/tienda/src/lib/catalogo.ts).
+  cliente.** Se traducen con `AJUSTE` y `ESTILO` en
+  [`apps/tienda/src/lib/vocabulario.ts`](../apps/tienda/src/lib/vocabulario.ts).
+  Ver "El nombre de las cosas" más abajo.
 
 Ejemplos del tono, tomados de la tienda: "Estamos surtiendo", "Esta ya se
 apartó", "Alguien se adelantó mientras la veías", "Ajustable, le queda a
@@ -164,29 +165,52 @@ todos", "No pagas nada ahora".
 
 ### Filtros del catálogo
 
-Van agrupados por dimensión —tipo, talla, color, equipo— y cada grupo lleva su
-rótulo. Antes eran una sola fila revuelta donde "Fitted", "7 1/4" y "Yankees"
-estaban pegados sin forma de saber qué era cada cosa.
+Cinco dimensiones, cada una en su propia fila con el rótulo pegado a la
+izquierda: **Estilo, Ajuste, Talla, Color, Equipo**. Antes eran una sola fila
+revuelta donde "Fitted", "7 1/4" y "Yankees" estaban pegados sin forma de
+saber qué era cada cosa.
 
-Tres reglas que hacen la diferencia entre un filtro que ayuda y uno que estorba,
-y que viven en [`apps/tienda/src/lib/filtros.ts`](../apps/tienda/src/lib/filtros.ts):
+**Ajuste y estilo son preguntas distintas y van separadas.** Cuando iban
+revueltas en un solo "tipo", una gorra urbana —que es ajustable— no aparecía
+al filtrar por ajustable, porque estaba metida bajo su propia etiqueta de
+estilo. Quien buscaba algo que le quedara sin pensar en tallas se perdía la
+mercancía más cara.
 
-1. **Dentro de una dimensión los valores suman, entre dimensiones restringen.**
-   Negro y azul es "negro o azul"; negro más fitted es "negro y fitted".
+Tres reglas que hacen la diferencia entre un filtro que ayuda y uno que
+estorba, en [`apps/tienda/src/lib/filtros.ts`](../apps/tienda/src/lib/filtros.ts):
+
+1. **Dentro de una dimensión los valores suman, entre dimensiones
+   restringen.** Negro y azul es "negro o azul"; negro más cerrada es
+   "negro y cerrada".
 2. **Una opción que dejaría la pantalla vacía no se ofrece.** Las opciones se
-   arman con lo que de verdad hay en stock. Y el conteo de cada chip se calcula
-   contra las *otras* dimensiones, no contra la propia, para que marcar un color
-   no encoja la lista de colores.
-3. **Una dimensión con una sola opción no se muestra.** No filtra nada y sugiere
-   una decisión que no existe.
+   arman con lo que de verdad hay en stock. Y el conteo de cada chip se
+   calcula contra las *otras* dimensiones, no contra la propia, para que
+   marcar un color no encoja la lista de colores.
+3. **Una dimensión con una sola opción no se muestra.** No filtra nada y
+   sugiere una decisión que no existe.
 
-Cada fila se desliza de lado en el celular. Apilarlas empujaría las gorras fuera
-de la pantalla, que es justo lo que el cliente vino a ver.
+Cada fila se desliza de lado en el celular y el rótulo se queda fijo a la
+izquierda. Con cinco dimensiones, poner el rótulo encima de cada fila
+duplicaría la altura del bloque y empujaría las gorras fuera de la primera
+pantalla, que es lo que el cliente vino a ver.
 
-Las etiquetas de tipo están en
-[`apps/tienda/src/lib/vocabulario.ts`](../apps/tienda/src/lib/vocabulario.ts), que
-vive aparte de `catalogo.ts` porque ese módulo abre el cliente de Supabase al
-cargarse y el vocabulario tiene que poder usarse y probarse sin red.
+### El nombre de las cosas
+
+Las etiquetas están en
+[`apps/tienda/src/lib/vocabulario.ts`](../apps/tienda/src/lib/vocabulario.ts),
+que vive aparte de `catalogo.ts` porque ese módulo abre el cliente de Supabase
+al cargarse y el vocabulario tiene que poder usarse y probarse sin red.
+
+**En español, no en inglés.** El mercado es Colotlán. Quien no está en el
+ambiente y lee "Fitted" no entiende; quien sí está y lee "Cerrada" entiende
+perfecto, solo que no es su primera palabra. La asimetría decide.
+
+| Se dice | No se dice | Por qué |
+|---|---|---|
+| Cerrada | Fitted | Español, y el cliente sabe que necesita su talla |
+| Ajustable | Snapback | Español, y describe la decisión: le queda a cualquiera |
+| Deportiva | (nombre de la liga) | Nombra la categoría sin nombrar marcas registradas |
+| Urbana | Bélica, Streetwear | "Bélica" arrastra la connotación narco y se le pega a la marca. "Urbana" hace el mismo trabajo sin cargar nada |
 
 ### Páginas de texto largo
 

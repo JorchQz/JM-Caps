@@ -2,18 +2,26 @@ import type { Categoria } from '@jm-caps/db'
 import type { Producto } from './catalogo'
 // Importado de vocabulario y no de catalogo: asi este modulo no arrastra el
 // cliente de Supabase y se puede probar solo.
-import { TIPOS_CLIENTE } from './vocabulario'
+import { AJUSTE, ESTILO } from './vocabulario'
 import { compararTallas } from './tallas'
 
-/** Las cuatro formas en que un cliente busca una gorra. */
-export type Dimension = 'tipo' | 'talla' | 'color' | 'equipo'
+/** Las formas en que un cliente busca una gorra, en el orden en que pregunta. */
+export type Dimension = 'estilo' | 'ajuste' | 'talla' | 'color' | 'equipo'
 
 export type Seleccion = Record<Dimension, string[]>
 
-export const SIN_FILTROS: Seleccion = { tipo: [], talla: [], color: [], equipo: [] }
+export const SIN_FILTROS: Seleccion = {
+  estilo: [],
+  ajuste: [],
+  talla: [],
+  color: [],
+  equipo: [],
+}
 
+// El orden de este objeto es el orden en que salen las filas de filtros.
 export const ROTULOS: Record<Dimension, string> = {
-  tipo: 'Tipo',
+  estilo: 'Estilo',
+  ajuste: 'Ajuste',
   talla: 'Talla',
   color: 'Color',
   equipo: 'Equipo',
@@ -37,8 +45,10 @@ function presentarColor(valor: string): string {
 /** Los valores de un producto en cada dimensión. Una talla puede tener varias. */
 function valoresDe(producto: Producto, dimension: Dimension): string[] {
   switch (dimension) {
-    case 'tipo':
-      return producto.categoria ? [TIPOS_CLIENTE[producto.categoria as Categoria]] : []
+    case 'estilo':
+      return producto.categoria ? [ESTILO[producto.categoria as Categoria]] : []
+    case 'ajuste':
+      return producto.categoria ? [AJUSTE[producto.categoria as Categoria]] : []
     case 'talla':
       return producto.tallas_disponibles ?? []
     case 'color':

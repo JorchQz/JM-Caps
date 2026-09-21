@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Categoria } from '@jm-caps/db'
 import {
-  TIPOS_CLIENTE,
+  AJUSTE,
+  ESTILO,
   apartar,
   cargarProducto,
   enlaceWhatsApp,
@@ -86,7 +87,10 @@ export function Producto() {
     )
   }
 
-  const tipo = data.categoria ? TIPOS_CLIENTE[data.categoria as Categoria] : null
+  // En la ficha si caben los dos: es donde el cliente decide.
+  const rotulo = data.categoria
+    ? [ESTILO[data.categoria as Categoria], AJUSTE[data.categoria as Categoria]].join(' · ')
+    : null
   const precios = preciosDe(data)
   const meta = [data.equipo, data.color].filter(Boolean).join(' · ')
   const stock = data.stock_disponible ?? 0
@@ -115,7 +119,7 @@ export function Producto() {
       </div>
 
       <div className="producto-cabecera">
-        {tipo ? <div className="rotulo">{tipo}</div> : null}
+        {rotulo ? <div className="rotulo">{rotulo}</div> : null}
         <h1 className="producto-nombre">{data.nombre}</h1>
         {meta ? <div className="producto-meta">{meta}</div> : null}
         <div className="producto-precio">

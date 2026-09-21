@@ -216,6 +216,8 @@ Todo dato o número que aparezca en esos documentos va en `legales.ts`, nunca es
 
 Tienda y panel comparten paleta, tipografía y logo: los tokens viven en `packages/ui` y los importan las dos apps. Lo que cambia entre ellas es la densidad, no el color. El diseño salió de Claude Design y el prototipo original está en `docs/Claude Design/`.
 
+**Cómo se le llama a cada gorra de cara al cliente** (decidido el 21 de septiembre de 2026, sección "El nombre de las cosas" del documento de diseño): en español, no en inglés, porque el mercado es Colotlán. **Cerrada** y no fitted, **Ajustable** y no snapback, **Deportiva** sin nombrar la liga, **Urbana** y no bélica —esa palabra arrastra la connotación narco y se le pega a la marca—. Las etiquetas están en `apps/tienda/src/lib/vocabulario.ts`, en un solo lugar. El ajuste y el estilo son dos ejes separados: una urbana es ajustable, y si se mezclan en un solo "tipo" deja de aparecer al filtrar por ajustable.
+
 ## Preferencias
 
 - Sin emojis en ninguna parte de la interfaz ni del código de cara al usuario.

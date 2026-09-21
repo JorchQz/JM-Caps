@@ -8,7 +8,7 @@ export const supabase = crearCliente({
 export type Producto = Tables<'catalogo_publico'>
 
 // El vocabulario de cara al cliente vive aparte para poder usarse sin red.
-export { TIPOS_CLIENTE } from './vocabulario'
+export { AJUSTE, ESTILO } from './vocabulario'
 
 export async function cargarCatalogo(): Promise<Producto[]> {
   const { data, error } = await supabase
