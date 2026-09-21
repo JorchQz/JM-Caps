@@ -27,7 +27,7 @@ export function Historial() {
 
       <MensajeError error={error} />
 
-      <div className="rejilla" style={{ marginBottom: 18 }}>
+      <div className="rejilla indicadores" style={{ marginBottom: 18 }}>
         <Indicador titulo="Vendido este mes" valor={formatearMXN(resumen.totalMes)} />
         <Indicador titulo="Piezas este mes" valor={String(resumen.piezasMes)} />
         <Indicador titulo="Ventas este mes" valor={String(resumen.ventasMes)} />

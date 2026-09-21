@@ -338,7 +338,7 @@ function CosteoDelPedido({
 
       {abrirPrecios ? <PreciosProveedor base={base} /> : null}
 
-      <div className="rejilla">
+      <div className="rejilla indicadores">
         <Indicador
           titulo="Le pagas al proveedor"
           valor={formatearUSD(costeo.totalUsd)}

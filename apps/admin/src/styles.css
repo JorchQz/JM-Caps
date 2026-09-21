@@ -496,30 +496,52 @@ tr:last-child td {
     flex-direction: column;
   }
 
+  /*
+    Barra superior compacta. Antes era una fila con desbordamiento lateral:
+    ocupaba un tercio de la pantalla y dejaba Apartados, Lotes e Historial
+    fuera de alcance. Ahora es una retícula de dos renglones y los enlaces
+    bajan de línea en vez de salirse.
+  */
   .barra-lateral {
     width: 100%;
     flex: none;
     height: auto;
-    position: static;
-    flex-direction: row;
+    min-height: 0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: auto 1fr;
     align-items: center;
-    gap: 14px;
-    overflow-x: auto;
-    padding: 12px 14px;
+    gap: 8px 12px;
+    padding: 8px 12px;
+    overflow: visible;
+  }
+
+  .marca-logo {
+    height: 22px;
   }
 
   .navegacion {
+    grid-column: 1 / -1;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 4px;
   }
 
   .navegacion a {
+    padding: 6px 10px;
+    font-size: 0.84rem;
     white-space: nowrap;
   }
 
   .pie-sesion {
-    margin-top: 0;
-    margin-left: auto;
+    grid-column: 2;
+    justify-self: end;
+    flex-direction: row;
+    align-items: center;
+    margin: 0;
+    gap: 8px;
   }
 
   .pie-sesion .correo {
@@ -527,7 +549,11 @@ tr:last-child td {
   }
 
   .contenido {
-    padding: 20px 16px 48px;
+    padding: 16px 14px 48px;
+  }
+
+  .encabezado-pagina {
+    margin-bottom: 14px;
   }
 }
 
@@ -686,5 +712,53 @@ tr:last-child td {
     content: '';
     display: block;
     clear: both;
+  }
+}
+
+/* -------------------------------------------- indicadores en el celular */
+
+/*
+  Los indicadores son un número y su nombre. En una sola columna, cada uno
+  ocupaba una tarjeta enorme para mostrar un cero y empujaba el contenido
+  real fuera de la pantalla. En celular van de dos en dos y compactos.
+*/
+@media (max-width: 720px) {
+  .rejilla.indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .rejilla.indicadores .tarjeta {
+    padding: 10px 12px;
+  }
+
+  .rejilla.indicadores .numero {
+    font-size: 1.25rem !important;
+  }
+
+  /* Los formularios que usan la rejilla se quedan en una columna: dos campos
+     por renglón en un teléfono no se pueden llenar. */
+  .rejilla:not(.indicadores) {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .tarjeta {
+    padding: 14px;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+  }
+
+  .encabezado-pagina p {
+    font-size: 0.86rem;
+  }
+}
+
+/* Los indicadores del costeo del pedido no viven dentro de una tarjeta. */
+@media (max-width: 720px) {
+  .rejilla.indicadores > div > .numero {
+    font-size: 1.25rem !important;
   }
 }

@@ -61,7 +61,7 @@ export function Inventario() {
 
       <MensajeError error={error} />
 
-      <div className="rejilla" style={{ marginBottom: 18 }}>
+      <div className="rejilla indicadores" style={{ marginBottom: 18 }}>
         <Indicador titulo="Disponibles" valor={String(totales.disponibles)} />
         <Indicador titulo="Apartadas" valor={String(totales.apartadas)} />
         <Indicador titulo="En camino" valor={String(totales.enCamino)} />
