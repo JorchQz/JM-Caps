@@ -172,6 +172,12 @@ El panel se usa entregando gorras en casa del cliente, donde la red de datos fal
 
 Lo confirmado vive en Supabase, así que un pedido se puede empezar en la computadora y terminar en el celular. Lo único que no cruza de dispositivo es lo que está a medio escribir: el borrador del formulario y el carrito de una venta sin cerrar, que se guardan en el navegador de ese aparato.
 
+## Diseño
+
+**Antes de construir cualquier pantalla nueva, lee [`docs/sistema-de-diseno.md`](docs/sistema-de-diseno.md).** Ahí está qué colores significan qué, qué componentes ya existen para reutilizar, las reglas de movimiento, la voz de los textos y los estados que toda pantalla debe cubrir. Los valores exactos viven en los CSS de cada app, no duplicados en el documento.
+
+Son dos sistemas distintos a propósito y no se deben unificar: la tienda es clara, con foto protagonista y acento cobalto; el panel es oscuro, denso y con acento ámbar. El diseño de la tienda salió de Claude Design y el prototipo original está en `docs/Claude Design/`.
+
 ## Preferencias
 
 - Sin emojis en ninguna parte de la interfaz ni del código de cara al usuario.
