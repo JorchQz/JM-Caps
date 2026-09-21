@@ -11,11 +11,23 @@ import {
   type Producto,
 } from '../lib/catalogo'
 import { compararTallas } from '../lib/tallas'
+import {
+  ROTULOS,
+  SIN_FILTROS,
+  alternar,
+  cuantosFiltros,
+  estaActivo,
+  filtrar,
+  opcionesDe,
+  type Dimension,
+  type Seleccion,
+} from '../lib/filtros'
 
 const TEXTO_ENTREGA =
   'Todas están físicamente en mano. La apartas hoy y te la entregamos hoy mismo en Colotlán.'
 
-type Filtros = { tipo: string | null; talla: string | null; equipo: string | null }
+/** Arriba de esto, un grupo se recorta y ofrece abrirse. */
+const OPCIONES_A_LA_VISTA = 8
 
 export function Catalogo() {
   const { data, isLoading, error, refetch } = useQuery({
@@ -23,51 +35,21 @@ export function Catalogo() {
     queryFn: cargarCatalogo,
   })
 
-  const [filtros, setFiltros] = useState<Filtros>({ tipo: null, talla: null, equipo: null })
+  const [filtros, setFiltros] = useState<Seleccion>(SIN_FILTROS)
+  const [abiertos, setAbiertos] = useState<Dimension[]>([])
   const productos = data ?? []
 
   // Los filtros se arman con lo que de verdad hay: ofrecer una talla que nadie
   // tiene solo lleva al cliente a una pantalla vacía.
-  const opciones = useMemo(() => {
-    const tipos: string[] = []
-    const tallas: string[] = []
-    const equipos: string[] = []
-
-    for (const producto of productos) {
-      const tipo = producto.categoria ? TIPOS_CLIENTE[producto.categoria as Categoria] : null
-      if (tipo && !tipos.includes(tipo)) tipos.push(tipo)
-      if (producto.equipo && !equipos.includes(producto.equipo)) equipos.push(producto.equipo)
-      for (const talla of producto.tallas_disponibles ?? []) {
-        if (!tallas.includes(talla)) tallas.push(talla)
-      }
-    }
-
-    return {
-      tipos,
-      tallas: tallas.sort(compararTallas),
-      equipos: equipos.sort((a, b) => a.localeCompare(b, 'es')),
-    }
-  }, [productos])
-
-  const visibles = useMemo(
-    () =>
-      productos.filter((producto) => {
-        const tipo = producto.categoria ? TIPOS_CLIENTE[producto.categoria as Categoria] : null
-        if (filtros.tipo && tipo !== filtros.tipo) return false
-        if (filtros.equipo && producto.equipo !== filtros.equipo) return false
-        if (filtros.talla && !(producto.tallas_disponibles ?? []).includes(filtros.talla)) {
-          return false
-        }
-        return true
-      }),
-    [productos, filtros],
-  )
+  const grupos = useMemo(() => opcionesDe(productos, filtros), [productos, filtros])
+  const visibles = useMemo(() => filtrar(productos, filtros), [productos, filtros])
 
   const piezas = productos.reduce((suma, producto) => suma + (producto.stock_disponible ?? 0), 0)
-  const hayFiltros = Boolean(filtros.tipo || filtros.talla || filtros.equipo)
+  const cuantos = cuantosFiltros(filtros)
 
-  function alternar(campo: keyof Filtros, valor: string) {
-    setFiltros((previo) => ({ ...previo, [campo]: previo[campo] === valor ? null : valor }))
+  function limpiar() {
+    setFiltros(SIN_FILTROS)
+    setAbiertos([])
   }
 
   if (isLoading) return <Esqueleto />
@@ -116,32 +98,52 @@ export function Catalogo() {
         <p className="portada-nota">{TEXTO_ENTREGA}</p>
       </section>
 
-      <nav className="filtros" aria-label="Filtros">
-        {opciones.tipos.map((valor) => (
-          <Ficha
-            key={valor}
-            etiqueta={valor}
-            activa={filtros.tipo === valor}
-            alTocar={() => alternar('tipo', valor)}
-          />
-        ))}
-        {opciones.tallas.map((valor) => (
-          <Ficha
-            key={valor}
-            etiqueta={valor}
-            activa={filtros.talla === valor}
-            alTocar={() => alternar('talla', valor)}
-          />
-        ))}
-        {opciones.equipos.map((valor) => (
-          <Ficha
-            key={valor}
-            etiqueta={valor}
-            activa={filtros.equipo === valor}
-            alTocar={() => alternar('equipo', valor)}
-          />
-        ))}
-      </nav>
+      <section className="filtros" aria-label="Filtros">
+        {grupos.map((grupo) => {
+          const abierto = abiertos.includes(grupo.dimension)
+          const recortado = !abierto && grupo.opciones.length > OPCIONES_A_LA_VISTA
+          const alaVista = recortado ? grupo.opciones.slice(0, OPCIONES_A_LA_VISTA) : grupo.opciones
+          const ocultas = grupo.opciones.length - alaVista.length
+
+          return (
+            <div className="filtros-grupo" key={grupo.dimension}>
+              <div className="filtros-rotulo" id={`rotulo-${grupo.dimension}`}>
+                {ROTULOS[grupo.dimension]}
+              </div>
+
+              <div className="filtros-fila" role="group" aria-labelledby={`rotulo-${grupo.dimension}`}>
+                {alaVista.map((opcion) => (
+                  <Ficha
+                    key={opcion.valor}
+                    etiqueta={opcion.valor}
+                    cuantas={opcion.cuantas}
+                    activa={estaActivo(filtros, grupo.dimension, opcion.valor)}
+                    alTocar={() =>
+                      setFiltros((previo) => alternar(previo, grupo.dimension, opcion.valor))
+                    }
+                  />
+                ))}
+
+                {recortado ? (
+                  <button
+                    type="button"
+                    className="ficha ficha-mas"
+                    onClick={() => setAbiertos((previo) => [...previo, grupo.dimension])}
+                  >
+                    {ocultas} más
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          )
+        })}
+
+        {cuantos > 0 ? (
+          <button type="button" className="limpiar-filtros" onClick={limpiar}>
+            Quitar {cuantos === 1 ? 'el filtro' : `los ${cuantos} filtros`}
+          </button>
+        ) : null}
+      </section>
 
       {visibles.length === 0 ? (
         <div className="mensaje">
@@ -150,11 +152,7 @@ export function Catalogo() {
             Quita uno y vuelve a ver: hay {piezas} {piezas === 1 ? 'gorra' : 'gorras'} disponibles
             en total.
           </p>
-          <button
-            type="button"
-            className="boton-mensaje"
-            onClick={() => setFiltros({ tipo: null, talla: null, equipo: null })}
-          >
+          <button type="button" className="boton-mensaje" onClick={limpiar}>
             Quitar filtros
           </button>
         </div>
@@ -166,23 +164,11 @@ export function Catalogo() {
         </div>
       )}
 
-      {hayFiltros && visibles.length > 0 ? (
-        <p style={{ margin: '0 16px 24px', fontSize: 13, color: 'var(--tinta-suave)' }}>
+      {cuantos > 0 && visibles.length > 0 ? (
+        <p className="conteo-filtrado">
           {visibles.length} {visibles.length === 1 ? 'modelo' : 'modelos'} con esos filtros.{' '}
-          <button
-            type="button"
-            onClick={() => setFiltros({ tipo: null, talla: null, equipo: null })}
-            style={{
-              background: 'none',
-              border: 0,
-              padding: 0,
-              color: 'var(--cobalto)',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              font: 'inherit',
-            }}
-          >
-            Quitar filtros
+          <button type="button" className="enlace" onClick={limpiar}>
+            Ver todo
           </button>
         </p>
       ) : null}
@@ -192,16 +178,19 @@ export function Catalogo() {
 
 function Ficha({
   etiqueta,
+  cuantas,
   activa,
   alTocar,
 }: {
   etiqueta: string
+  cuantas?: number
   activa: boolean
   alTocar: () => void
 }) {
   return (
     <button type="button" className="ficha" aria-pressed={activa} onClick={alTocar}>
       {etiqueta}
+      {cuantas !== undefined ? <span className="ficha-conteo">{cuantas}</span> : null}
     </button>
   )
 }

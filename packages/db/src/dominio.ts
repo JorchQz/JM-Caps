@@ -43,8 +43,11 @@ export const TALLAS_CONOCIDAS: readonly string[] = [
 type InfoCategoria = {
   codigo: Categoria
   etiqueta: string
-  /** Precio de lista sugerido. El alta de modelo lo precarga, pero se puede cambiar. */
-  precioSugerido: number
+  /**
+   * El precio sugerido NO vive aquí: está en la tabla `precios_categoria`, que
+   * se edita desde el panel. Es una decisión de negocio que cambia sola, sin
+   * que cambie el programa.
+   */
   /** Si es false, la categoría es ajustable y las unidades se dan de alta sin talla. */
   usaTalla: boolean
   /** Tallas que ofrece esta categoría. Vacío en las ajustables. */
@@ -59,7 +62,6 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
   AA: {
     codigo: 'AA',
     etiqueta: 'AA - estilo New Era fitted, cerrada con talla',
-    precioSugerido: 419,
     usaTalla: true,
     tallas: TALLAS_FITTED,
     tallaSugerida: '7 1/4',
@@ -68,7 +70,6 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
   AAS: {
     codigo: 'AAS',
     etiqueta: 'AAS - estilo New Era snapback, ajustable con broche',
-    precioSugerido: 419,
     usaTalla: false,
     tallas: [],
     tallaSugerida: null,
@@ -77,7 +78,6 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
   UU: {
     codigo: 'UU',
     etiqueta: 'UU - calidad 1:1, fitted con talla',
-    precioSugerido: 699,
     usaTalla: true,
     tallas: TALLAS_FITTED,
     tallaSugerida: '7 1/4',
@@ -86,7 +86,6 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
   UUS: {
     codigo: 'UUS',
     etiqueta: 'UUS - calidad 1:1, snapback ajustable',
-    precioSugerido: 699,
     usaTalla: false,
     tallas: [],
     tallaSugerida: null,
@@ -95,7 +94,6 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
   K: {
     codigo: 'K',
     etiqueta: 'K - niños, con talla',
-    precioSugerido: 399,
     usaTalla: true,
     tallas: TALLAS_NINO,
     tallaSugerida: '6 1/2',
@@ -104,7 +102,6 @@ export const CATEGORIAS: Record<Categoria, InfoCategoria> = {
   DH: {
     codigo: 'DH',
     etiqueta: 'DH - streetwear, ajustable',
-    precioSugerido: 799,
     usaTalla: false,
     tallas: [],
     tallaSugerida: null,

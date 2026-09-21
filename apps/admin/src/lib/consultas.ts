@@ -19,6 +19,7 @@ export const llaves = {
   unidadesDeLote: (id: string) => ['unidades-lote', id] as const,
   lineasDePedido: (id: string) => ['lineas-pedido', id] as const,
   preciosProveedor: ['precios-proveedor'] as const,
+  preciosCategoria: ['precios-categoria'] as const,
   configuracion: (clave: string) => ['configuracion', clave] as const,
   apartados: ['apartados'] as const,
   ventas: ['ventas'] as const,
@@ -753,4 +754,45 @@ export async function quitarOferta(modeloIds: string[]): Promise<number> {
 
   if (error) fallar('No se pudo quitar la oferta', error)
   return modeloIds.length
+}
+
+/**
+ * Precio de venta con el que nace un producto nuevo de cada tipo.
+ *
+ * No es el precio que se cobra: ese vive en cada modelo, porque una gorra
+ * puede valer distinto a las de su tipo. Cambiar esto no reprecia lo que ya
+ * está dado de alta; para eso está el botón de aplicar a todo el tipo.
+ */
+export type PrecioCategoria = Tables<'precios_categoria'>
+
+export async function cargarPreciosCategoria(): Promise<Record<Categoria, number>> {
+  const { data, error } = await supabase.from('precios_categoria').select('*')
+  if (error) fallar('No se pudieron cargar los precios por tipo', error)
+
+  const mapa = {} as Record<Categoria, number>
+  for (const fila of data ?? []) mapa[fila.categoria] = fila.precio_mxn
+  return mapa
+}
+
+export async function guardarPrecioCategoria(
+  categoria: Categoria,
+  precio: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('precios_categoria')
+    .upsert({ categoria, precio_mxn: precio, actualizado_en: new Date().toISOString() })
+
+  if (error) fallar('No se pudo guardar el precio del tipo', error)
+}
+
+/** Pone el precio del tipo en todos los modelos de ese tipo. Acto deliberado. */
+export async function repreciarCategoria(categoria: Categoria, precio: number): Promise<number> {
+  const { data, error } = await supabase
+    .from('modelos')
+    .update({ precio_venta_mxn: precio })
+    .eq('categoria', categoria)
+    .select('id')
+
+  if (error) fallar('No se pudieron actualizar los precios de ese tipo', error)
+  return (data ?? []).length
 }

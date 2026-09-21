@@ -14,6 +14,7 @@ import {
   agregarUnidades,
   buscarModeloPorLink,
   cargarLotes,
+  cargarPreciosCategoria,
   crearModelo,
   lineasDePedido,
   llaves,
@@ -304,7 +305,7 @@ function ModeloNuevo({
       equipo: '',
       color: '',
       descripcion: '',
-      precio: String(CATEGORIAS.AA.precioSugerido),
+      precio: '',
     },
   )
   const { categoria, nombre, equipo, color, descripcion, precio } = borrador
@@ -312,6 +313,21 @@ function ModeloNuevo({
   function cambiar(campos: Partial<typeof borrador>) {
     setBorrador((previo) => ({ ...previo, ...campos }))
   }
+
+  // El precio con el que nace cada tipo se edita en Precios y ofertas: no está
+  // escrito en el código, así que hay que esperarlo de la base.
+  const preciosTipo = useQuery({
+    queryKey: llaves.preciosCategoria,
+    queryFn: cargarPreciosCategoria,
+  })
+
+  // Solo rellena si el campo está vacío. Un precio ya tecleado no se pisa
+  // porque la consulta haya llegado tarde.
+  useEffect(() => {
+    const sugerido = preciosTipo.data?.[categoria]
+    if (precio === '' && sugerido != null) cambiar({ precio: String(sugerido) })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preciosTipo.data, categoria, precio])
 
   const [archivo, setArchivo] = useState<File | null>(null)
   const [modeloCreado, setModeloCreado] = useState<Modelo | null>(null)
@@ -337,7 +353,8 @@ function ModeloNuevo({
   })
 
   function cambiarCategoria(valor: Categoria) {
-    cambiar({ categoria: valor, precio: String(CATEGORIAS[valor].precioSugerido) })
+    const sugerido = preciosTipo.data?.[valor]
+    cambiar({ categoria: valor, precio: sugerido != null ? String(sugerido) : '' })
   }
 
   if (modeloCreado) {

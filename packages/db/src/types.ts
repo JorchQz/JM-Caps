@@ -85,6 +85,24 @@ export type Database = {
         }
         Relationships: []
       }
+      precios_categoria: {
+        Row: {
+          actualizado_en: string
+          categoria: Database['public']['Enums']['categoria_cachucha']
+          precio_mxn: number
+        }
+        Insert: {
+          actualizado_en?: string
+          categoria: Database['public']['Enums']['categoria_cachucha']
+          precio_mxn: number
+        }
+        Update: {
+          actualizado_en?: string
+          categoria?: Database['public']['Enums']['categoria_cachucha']
+          precio_mxn?: number
+        }
+        Relationships: []
+      }
       precios_proveedor: {
         Row: {
           actualizado_en: string

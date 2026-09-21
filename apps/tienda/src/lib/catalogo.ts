@@ -1,9 +1,4 @@
-import {
-  crearCliente,
-  telefonoWhatsApp,
-  type Categoria,
-  type Tables,
-} from '@jm-caps/db'
+import { crearCliente, telefonoWhatsApp, type Tables } from '@jm-caps/db'
 
 export const supabase = crearCliente({
   url: import.meta.env.VITE_SUPABASE_URL,
@@ -12,19 +7,8 @@ export const supabase = crearCliente({
 
 export type Producto = Tables<'catalogo_publico'>
 
-/**
- * Los códigos internos (AA, AAS, DH) no significan nada para el cliente: son
- * del proveedor. Aquí se traducen a lo único que le importa saber, que es si
- * la gorra lleva talla o es ajustable.
- */
-export const TIPOS_CLIENTE: Record<Categoria, string> = {
-  AA: 'Cerrada, con talla',
-  AAS: 'Ajustable',
-  UU: 'Cerrada, con talla',
-  UUS: 'Ajustable',
-  K: 'Niños',
-  DH: 'Streetwear',
-}
+// El vocabulario de cara al cliente vive aparte para poder usarse sin red.
+export { TIPOS_CLIENTE } from './vocabulario'
 
 export async function cargarCatalogo(): Promise<Producto[]> {
   const { data, error } = await supabase

@@ -206,24 +206,78 @@ input {
 
 /* ---------------------------------------------------------------- filtros */
 
+/*
+  Los filtros van agrupados por dimension y con su rotulo. Antes eran una
+  sola fila revuelta: "Fitted", "7 1/4" y "Yankees" pegados, sin forma de
+  saber que era cada cosa ni que se podia combinar.
+
+  Cada fila se desliza de lado en el celular: con veinte equipos en
+  catalogo, apilarlas empujaria las gorras fuera de la pantalla.
+*/
 .filtros {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  overflow-x: auto;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 14px;
   border-bottom: 1px solid var(--borde);
+}
+
+.filtros-rotulo {
+  padding: 0 16px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  font-stretch: 112%;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+
+.filtros-fila {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  overflow-x: auto;
   scrollbar-width: none;
 }
 
-.filtros::-webkit-scrollbar {
+.filtros-fila::-webkit-scrollbar {
   display: none;
+}
+
+.limpiar-filtros {
+  align-self: flex-start;
+  margin: 2px 16px 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cobalto);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 @media (min-width: 760px) {
   .filtros {
+    padding: 16px 0 18px;
+  }
+
+  .filtros-rotulo,
+  .limpiar-filtros {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .limpiar-filtros {
+    margin-left: 0;
+  }
+
+  /* Con espacio de sobra las opciones bajan de linea en vez de esconderse. */
+  .filtros-fila {
     flex-wrap: wrap;
     overflow-x: visible;
-    padding: 16px 28px;
+    padding: 0 28px;
   }
 }
 
@@ -257,6 +311,52 @@ input {
   color: var(--nieve);
   font-weight: 700;
   font-stretch: 112%;
+}
+
+.ficha {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Cuantos modelos quedan si se toca. Un numero chico avisa antes de tocar
+   que esa rama del catalogo esta casi vacia. */
+.ficha-conteo {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tinta-suave);
+}
+
+.ficha[aria-pressed='true'] .ficha-conteo {
+  color: var(--gris-hondo);
+}
+
+.ficha-mas {
+  color: var(--tinta-suave);
+  font-weight: 600;
+}
+
+.conteo-filtrado {
+  margin: 0 16px 24px;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+.enlace {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cobalto);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (min-width: 760px) {
+  .conteo-filtrado {
+    margin-left: 28px;
+    margin-right: 28px;
+  }
 }
 
 /* --------------------------------------------------------------- catálogo */

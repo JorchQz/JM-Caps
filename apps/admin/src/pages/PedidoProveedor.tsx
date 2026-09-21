@@ -15,6 +15,7 @@ import {
   actualizarLinea,
   actualizarLote,
   agregarLinea,
+  cargarPreciosCategoria,
   cargarPreciosProveedor,
   confirmarPedido,
   eliminarEscalonPrecio,
@@ -74,6 +75,10 @@ export function PedidoProveedor() {
     queryKey: llaves.preciosProveedor,
     queryFn: cargarPreciosProveedor,
   })
+  const preciosCategoria = useQuery({
+    queryKey: llaves.preciosCategoria,
+    queryFn: cargarPreciosCategoria,
+  })
   const baseEscalon = useQuery({
     queryKey: llaves.configuracion('base_escalon'),
     queryFn: () => leerConfiguracion('base_escalon'),
@@ -106,6 +111,7 @@ export function PedidoProveedor() {
   const faltanParaMinimo = Math.max(0, MINIMO_PIEZAS_PEDIDO - piezas)
 
   const listaPrecios = precios.data ?? []
+  const preciosVenta: Partial<Record<Categoria, number>> = preciosCategoria.data ?? {}
   const base = (baseEscalon.data as BaseEscalon | null) ?? 'categoria'
   // El costeo del pedido solo cuenta lo vigente; la tabla necesita todas las
   // líneas para poder mostrar también las descartadas. Los escalones se
@@ -116,8 +122,16 @@ export function PedidoProveedor() {
     lote.data.tipo_cambio_dia,
     base,
     lote.data.costo_envio_mxn,
+    preciosVenta,
   )
-  const costeoTodas = costearPedido(todas, listaPrecios, lote.data.tipo_cambio_dia, base)
+  const costeoTodas = costearPedido(
+    todas,
+    listaPrecios,
+    lote.data.tipo_cambio_dia,
+    base,
+    0,
+    preciosVenta,
+  )
   totalParaConfirmar.current = costeo.totalUsd > 0 ? costeo.totalUsd : null
 
   const datosPedido = {

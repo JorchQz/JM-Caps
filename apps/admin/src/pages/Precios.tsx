@@ -15,9 +15,12 @@ import {
 import {
   aplicarOferta,
   cargarInventario,
+  cargarPreciosCategoria,
+  guardarPrecioCategoria,
   guardarPrecios,
   llaves,
   quitarOferta,
+  repreciarCategoria,
   type FilaInventario,
 } from '../lib/consultas'
 import {
@@ -52,6 +55,7 @@ export function Precios() {
         }
       />
 
+      <PreciosPorTipo />
       <TablaPrecios />
     </>
   )
@@ -477,6 +481,150 @@ function FormularioOferta({
             : 'Sin selección aplica a todos los modelos que el filtro deja a la vista.'}
         </p>
       </form>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Precio por tipo de gorra
+// ---------------------------------------------------------------------------
+
+/**
+ * El precio con el que nace un producto nuevo de cada tipo.
+ *
+ * Se separa del precio de cada gorra a propósito. Cambiar el número de aquí no
+ * reprecia lo que ya está en catálogo: eso es un acto aparte, con su propio
+ * botón, porque bajarle el precio a treinta gorras sin querer es caro.
+ */
+function PreciosPorTipo() {
+  const clienteQuery = useQueryClient()
+
+  const precios = useQuery({
+    queryKey: llaves.preciosCategoria,
+    queryFn: cargarPreciosCategoria,
+  })
+  const inventario = useQuery({ queryKey: llaves.inventario, queryFn: cargarInventario })
+
+  const [editados, setEditados] = useState<Partial<Record<Categoria, string>>>({})
+
+  function refrescar() {
+    void clienteQuery.invalidateQueries({ queryKey: llaves.preciosCategoria })
+    void clienteQuery.invalidateQueries({ queryKey: llaves.inventario })
+  }
+
+  const guardar = useMutation({
+    mutationFn: ({ categoria, precio }: { categoria: Categoria; precio: number }) =>
+      guardarPrecioCategoria(categoria, precio),
+    onSuccess: (_datos, variables) => {
+      setEditados((previo) => {
+        const copia = { ...previo }
+        delete copia[variables.categoria]
+        return copia
+      })
+      refrescar()
+    },
+  })
+
+  const repreciar = useMutation({
+    mutationFn: ({ categoria, precio }: { categoria: Categoria; precio: number }) =>
+      repreciarCategoria(categoria, precio),
+    onSuccess: refrescar,
+  })
+
+  function cuantos(categoria: Categoria): number {
+    return (inventario.data ?? []).filter((fila) => fila.modelo.categoria === categoria).length
+  }
+
+  if (precios.isLoading) return <Cargando />
+
+  return (
+    <div className="tarjeta">
+      <h2 style={{ marginBottom: 4 }}>Precio por tipo de gorra</h2>
+      <p className="tenue" style={{ marginTop: 0, fontSize: '0.88rem' }}>
+        Con este precio nace cada producto nuevo, para no teclearlo una y otra vez. Guardarlo no
+        cambia lo que ya está en catálogo; para eso está el botón de aplicar.
+      </p>
+
+      <MensajeError error={precios.error} />
+      <MensajeError error={guardar.error} />
+      <MensajeError error={repreciar.error} />
+
+      <div className="tabla-contenedor">
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th className="numero">Precio</th>
+              <th className="numero">Modelos</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {Object.values(CATEGORIAS).map((info) => {
+              const vigente = precios.data?.[info.codigo]
+              const valor = editados[info.codigo] ?? (vigente != null ? String(vigente) : '')
+              const numero = Number(valor)
+              const cambiado = valor !== '' && numero > 0 && numero !== vigente
+              const modelos = cuantos(info.codigo)
+
+              return (
+                <tr key={info.codigo}>
+                  <td className="principal">
+                    <strong>{info.etiqueta}</strong>
+                    {info.pausada ? (
+                      <div className="tenue" style={{ fontSize: '0.83rem' }}>
+                        Pausada: no se compra por ahora.
+                      </div>
+                    ) : null}
+                  </td>
+                  <td className="numero" data-etiqueta="Precio">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={valor}
+                      style={{ width: 96, textAlign: 'right' }}
+                      onChange={(evento) =>
+                        setEditados((previo) => ({ ...previo, [info.codigo]: evento.target.value }))
+                      }
+                    />
+                  </td>
+                  <td className="numero" data-etiqueta="Modelos">
+                    {modelos}
+                  </td>
+                  <td className="acciones">
+                    <div className="fila" style={{ justifyContent: 'flex-end', gap: 4 }}>
+                      {cambiado ? (
+                        <button
+                          type="button"
+                          className="principal"
+                          disabled={guardar.isPending}
+                          onClick={() => guardar.mutate({ categoria: info.codigo, precio: numero })}
+                        >
+                          Guardar
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="discreto"
+                        disabled={modelos === 0 || numero <= 0 || repreciar.isPending}
+                        onClick={() => {
+                          const texto = `Poner ${formatearMXN(numero)} a los ${modelos} modelo(s) de tipo ${info.codigo}. Se pierde el precio que tengan ahora.`
+                          if (confirm(texto)) {
+                            repreciar.mutate({ categoria: info.codigo, precio: numero })
+                          }
+                        }}
+                      >
+                        Aplicar a los {modelos}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

@@ -121,7 +121,7 @@ Antes de escribir CSS nuevo, revisa si ya existe:
 | Foto | `.marco-foto`, `.sin-foto`, `.producto-foto` |
 | Escasez | `.escasez` |
 | Tallas | `.talla-mini`, `.talla-ajustable`, `.talla-boton`, `.selector-tallas`, `.tallas-lista` |
-| Filtros | `.filtros`, `.ficha` |
+| Filtros | `.filtros`, `.filtros-grupo`, `.filtros-rotulo`, `.filtros-fila`, `.ficha`, `.ficha-conteo`, `.limpiar-filtros` |
 | Formularios | `.formulario`, `.etiqueta`, `.campo`, `.error`, `.boton`, `.motivo` |
 | Botones | `.boton`, `.boton-mensaje`, `.boton-whatsapp`, `.boton-fantasma`, `.volver` |
 | Mensajes y estados | `.mensaje`, `.mensaje-titulo`, `.mensaje-texto` |
@@ -161,6 +161,32 @@ terminada sin resolverlos:
 Ejemplos del tono, tomados de la tienda: "Estamos surtiendo", "Esta ya se
 apartó", "Alguien se adelantó mientras la veías", "Ajustable, le queda a
 todos", "No pagas nada ahora".
+
+### Filtros del catálogo
+
+Van agrupados por dimensión —tipo, talla, color, equipo— y cada grupo lleva su
+rótulo. Antes eran una sola fila revuelta donde "Fitted", "7 1/4" y "Yankees"
+estaban pegados sin forma de saber qué era cada cosa.
+
+Tres reglas que hacen la diferencia entre un filtro que ayuda y uno que estorba,
+y que viven en [`apps/tienda/src/lib/filtros.ts`](../apps/tienda/src/lib/filtros.ts):
+
+1. **Dentro de una dimensión los valores suman, entre dimensiones restringen.**
+   Negro y azul es "negro o azul"; negro más fitted es "negro y fitted".
+2. **Una opción que dejaría la pantalla vacía no se ofrece.** Las opciones se
+   arman con lo que de verdad hay en stock. Y el conteo de cada chip se calcula
+   contra las *otras* dimensiones, no contra la propia, para que marcar un color
+   no encoja la lista de colores.
+3. **Una dimensión con una sola opción no se muestra.** No filtra nada y sugiere
+   una decisión que no existe.
+
+Cada fila se desliza de lado en el celular. Apilarlas empujaría las gorras fuera
+de la pantalla, que es justo lo que el cliente vino a ver.
+
+Las etiquetas de tipo están en
+[`apps/tienda/src/lib/vocabulario.ts`](../apps/tienda/src/lib/vocabulario.ts), que
+vive aparte de `catalogo.ts` porque ese módulo abre el cliente de Supabase al
+cargarse y el vocabulario tiene que poder usarse y probarse sin red.
 
 ### Páginas de texto largo
 

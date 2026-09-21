@@ -38,10 +38,11 @@ JM Caps es una tienda de gorras (cachuchas) en Colotlán, Jalisco, México, oper
 
 ## Precios de referencia (venta al público, stock real)
 
-- AA / AAS: 419 MXN
-- DH: 799 MXN
-- K: 399 MXN
-- Costo real aproximado por unidad AA/AAS: ~155-160 MXN (varía con tipo de cambio, envío prorrateado del lote, e impuesto de importación del 33.5% desde China si el valor declarado lo activa)
+**Las cifras no van aquí: viven en la tabla `precios_categoria` y se editan desde el panel** (Inventario → Precios y ofertas → Precio por tipo de gorra). Escritas en este archivo quedarían obsoletas al primer cambio, que es justo lo que se quiso evitar.
+
+Al 21 de septiembre de 2026 el arranque fue: DH a 499 MXN y todo lo demás a 299 MXN.
+
+Costo real aproximado por unidad AA/AAS: ~155-160 MXN (varía con tipo de cambio, envío prorrateado del lote, e impuesto de importación del 33.5% desde China si el valor declarado lo activa).
 
 ## Consideraciones legales (México)
 
@@ -63,7 +64,9 @@ Dos cosas distintas y conviene no mezclarlas:
 - El **precio de lista** (`modelos.precio_venta_mxn`) es lo que vale la gorra.
 - Una **oferta** vive en el modelo y la ve el cliente en la tienda con el precio anterior tachado y la marca "Rebajada". **Se guarda el descuento, no el precio resultante**, para que al subir el precio de lista la oferta lo siga en vez de quedarse congelada en una cifra vieja. Puede tener fecha de término; sin fecha dura hasta que se quite.
 
-Las dos se administran en **Precios y ofertas** (`/precios`, se entra desde Inventario): tabla con todos los precios editables, ajuste masivo por porcentaje o monto sobre lo que el filtro deja a la vista, y ofertas por selección.
+Y un tercer número que no es ninguno de los dos: el **precio por tipo de gorra** (tabla `precios_categoria`). Es con el que nace un producto nuevo, para no teclearlo en cada alta. Guardarlo **no** reprecia el catálogo; hay un botón aparte, con confirmación, para aplicarlo a todos los modelos de ese tipo.
+
+Los tres se administran en **Precios y ofertas** (`/precios`, se entra desde Inventario): el precio por tipo arriba, luego la tabla con todos los precios editables, el ajuste masivo por porcentaje o monto sobre lo que el filtro deja a la vista, y las ofertas por selección.
 
 El ajuste masivo **escribe los valores en la tabla pero no los guarda**: hay que revisarlos y confirmar. Un error de dedo en un ajuste de cincuenta modelos se arregla descartando, no modelo por modelo.
 
@@ -118,6 +121,9 @@ El rojo (`--ultima`) sigue reservado para la escasez real. La marca de rebaja va
 **`pedido_lineas`** — el borrador de lo que se le pide al proveedor. No es inventario: el inventario nace al confirmar.
 - `id` (uuid, pk), `lote_id` (fk), `link_yupoo` (text), `categoria` (enum — define el precio de compra), `talla` (text), `cantidad` (int), `precio_usd_unitario` (numeric, null — solo si el proveedor cotizó distinto esa pieza), `estado` (enum: solicitada/confirmada/no_disponible), `nota` (text — para el proveedor), `modelo_id` (fk, se resuelve solo si el link ya existe), `unidades_creadas` (int — avance de captura), `orden` (int)
 
+**`precios_categoria`** — precio de venta con el que **nace** un producto nuevo de cada tipo, para no teclearlo en cada alta. No es el precio que se cobra: ese vive en cada modelo, porque una gorra puede valer distinto a las de su tipo. Cambiar este número **no reprecia** lo que ya está en catálogo; para eso hay un botón aparte, con confirmación, en Precios y ofertas. Solo el admin la lee.
+- `categoria` (pk), `precio_mxn` (numeric), `actualizado_en` (timestamptz)
+
 **`precios_proveedor`** — la escalera de precios de compra. El proveedor cobra por volumen y cada categoría tiene su propia escalera. Gana siempre el escalón más alto que alcanza el pedido. Se edita desde la pantalla del pedido.
 - `categoria` + `desde_piezas` (pk compuesta), `precio_usd` (numeric), `actualizado_en` (timestamptz)
 
@@ -166,7 +172,7 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 
 ### Seguridad (RLS)
 
-- RLS activo en las 9 tablas.
+- RLS activo en las 10 tablas.
 - Además de RLS hay permisos por columna: el rol `anon` **no** puede leer `modelos.link_yupoo` (revela al proveedor) ni `unidades.folio`, `costo_unitario_mxn` o los datos del apartado. La vista `catalogo_publico` es `security_invoker`, así que depende de esos permisos y no los rodea.
 - El público (`anon`) solo puede: leer `catalogo_publico`, leer columnas seguras de `modelos`/`unidades` (sin costos ni datos de apartado) filtradas por `activo`/`disponible`, y ejecutar `apartar_unidad()`.
 - Cualquier usuario autenticado (el admin) tiene acceso completo a todo, vía políticas `admin_full_access`. El usuario admin se crea manualmente en Authentication → Users del dashboard de Supabase.

@@ -1,4 +1,4 @@
-import { CATEGORIAS, type Categoria } from '@jm-caps/db'
+import type { Categoria } from '@jm-caps/db'
 import type { LineaConModelo, PrecioProveedor } from './consultas'
 
 /**
@@ -95,6 +95,8 @@ export function costearPedido(
   tipoCambio: number | null,
   base: BaseEscalon = 'categoria',
   envioMxn = 0,
+  /** Precio de venta por tipo, para estimar el ingreso de lo que aun no se captura. */
+  preciosVenta: Partial<Record<Categoria, number>> = {},
 ): CosteoPedido {
   const detalle: CosteoLinea[] = lineas.map((linea) => {
     const piezasDelEscalon = piezasParaEscalon(linea, lineas, base)
@@ -106,9 +108,11 @@ export function costearPedido(
     // Un precio acordado para esa pieza en particular gana sobre la escalera.
     const precioUsd = linea.precio_usd_unitario ?? dePrecioLista
 
+    // Si el modelo ya existe se usa su precio real; si todavia no se captura,
+    // el del tipo, que es con el que va a nacer.
     const ventaMxn =
       linea.modelo?.precio_venta_mxn ??
-      (linea.categoria ? CATEGORIAS[linea.categoria].precioSugerido : null)
+      (linea.categoria ? preciosVenta[linea.categoria] ?? null : null)
 
     return {
       linea,
