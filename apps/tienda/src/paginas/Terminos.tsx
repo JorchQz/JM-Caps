@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Documento } from '../componentes/Documento'
-import { DIAS_GARANTIA, HORAS_APARTADO, NEGOCIO } from '../lib/legales'
+import { DIAS_GARANTIA, HORAS_APARTADO, MAX_APARTADOS, NEGOCIO } from '../lib/legales'
 
 /**
  * Términos del servicio.
@@ -47,7 +47,8 @@ export function Terminos() {
           gorra regresa al catálogo para cualquier otra persona.
         </li>
         <li>
-          Puedes tener hasta 3 gorras apartadas al mismo tiempo. Si necesitas más, escríbenos.
+          Puedes tener hasta {MAX_APARTADOS} gorras apartadas al mismo tiempo. Si necesitas más,
+          escríbenos.
         </li>
       </ul>
 

@@ -172,6 +172,20 @@ El panel se usa entregando gorras en casa del cliente, donde la red de datos fal
 
 Lo confirmado vive en Supabase, así que un pedido se puede empezar en la computadora y terminar en el celular. Lo único que no cruza de dispositivo es lo que está a medio escribir: el borrador del formulario y el carrito de una venta sin cerrar, que se guardan en el navegador de ese aparato.
 
+## Documentos legales: mantenerlos verdaderos
+
+La tienda tiene aviso de privacidad, términos y condiciones y una página de cómo comprar. Describen reglas que viven en otro lado — el plazo del apartado y el tope por persona los aplica `apartar_unidad` en la base — así que **cambiar una regla sin cambiar el documento hace que el documento le mienta al cliente**, y en un aviso de privacidad eso tiene consecuencias legales.
+
+**Antes de dar por terminado cualquier cambio que toque el apartado, los datos que se recaban, los plazos, el contacto, las zonas de entrega, las formas de pago o las devoluciones, corre:**
+
+```bash
+npm run verificar:legales
+```
+
+Compara los documentos contra las reglas vigentes en el código y en las migraciones, y falla si dejaron de coincidir. Si el cambio fue de fondo, actualiza también `actualizado` en `apps/tienda/src/lib/legales.ts`: esa fecha se mueve a mano y a propósito, porque debe reflejar una revisión deliberada y no un cambio de formato.
+
+Todo dato o número que aparezca en esos documentos va en `legales.ts`, nunca escrito dentro del texto. Si se escribe en dos lugares, uno de los dos va a quedar obsoleto.
+
 ## Diseño
 
 **Antes de construir cualquier pantalla nueva, lee [`docs/sistema-de-diseno.md`](docs/sistema-de-diseno.md).** Ahí está qué colores significan qué, qué componentes ya existen para reutilizar, las reglas de movimiento, la voz de los textos y los estados que toda pantalla debe cubrir. Los valores exactos viven en los CSS de cada app, no duplicados en el documento.

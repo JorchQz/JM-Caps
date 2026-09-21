@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Categoria } from '@jm-caps/db'
 import {
-  HORAS_APARTADO,
   TIPOS_CLIENTE,
   apartar,
   cargarProducto,
@@ -11,6 +10,7 @@ import {
   precioEnPesos,
 } from '../lib/catalogo'
 import { compararTallas } from '../lib/tallas'
+import { HORAS_APARTADO } from '../lib/legales'
 
 export function Producto() {
   const { id = '' } = useParams()

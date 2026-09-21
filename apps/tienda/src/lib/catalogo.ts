@@ -26,9 +26,6 @@ export const TIPOS_CLIENTE: Record<Categoria, string> = {
   DH: 'Streetwear',
 }
 
-/** Horas que dura un apartado. Tiene que coincidir con lo que hace la base. */
-export const HORAS_APARTADO = 24
-
 export async function cargarCatalogo(): Promise<Producto[]> {
   const { data, error } = await supabase
     .from('catalogo_publico')

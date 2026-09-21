@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Documento } from '../componentes/Documento'
 import { enlaceWhatsApp } from '../lib/catalogo'
-import { HORAS_APARTADO, NEGOCIO } from '../lib/legales'
+import { HORAS_APARTADO, MAX_APARTADOS, NEGOCIO } from '../lib/legales'
 
 /**
  * Explica el flujo completo. No es un documento legal: existe para quitarle
@@ -63,7 +63,7 @@ export function ComoComprar() {
       </p>
 
       <h3>¿Puedo apartar varias?</h3>
-      <p>Sí, hasta tres al mismo tiempo. Si necesitas más para un pedido grande, escríbenos.</p>
+      <p>Sí, hasta {MAX_APARTADOS} al mismo tiempo. Si necesitas más para un pedido grande, escríbenos.</p>
 
       <h3>¿Qué talla soy?</h3>
       <p>

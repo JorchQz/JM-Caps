@@ -1,49 +1,60 @@
 /**
- * Datos del negocio que aparecen en los documentos legales.
+ * Datos del negocio y reglas que aparecen en los documentos legales.
  *
- * La Ley Federal de Protección de Datos Personales en Posesión de los
- * Particulares exige que el aviso de privacidad identifique al responsable y
- * diga cómo contactarlo para ejercer derechos ARCO. Sin estos datos el aviso
- * no cumple, así que están aquí en un solo lugar para llenarlos una vez.
+ * Este archivo es la única fuente: si un plazo o un dato de contacto se
+ * escribiera también dentro del texto de una página, tarde o temprano una de
+ * las dos copias quedaría obsoleta y el documento diría algo falso.
  *
- * REVISAR ANTES DE PUBLICAR: los campos marcados con PENDIENTE.
+ * Las reglas que además vive la base de datos están marcadas. Cambiar una aquí
+ * sin cambiar la migración correspondiente hace que los términos mientan;
+ * `npm run verificar:legales` lo detecta.
  */
 export const NEGOCIO = {
   /** Nombre comercial con el que te conoce el cliente. */
   nombre: 'JM Caps',
 
-  /**
-   * Quién responde legalmente por los datos. Si operas como persona física,
-   * va tu nombre completo. PENDIENTE: confirmar cómo va a aparecer.
-   */
-  responsable: 'PENDIENTE: nombre completo del responsable',
+  /** Quién responde legalmente por los datos personales. */
+  responsable: 'Jorge Iván Martínez Quezada',
 
   /**
    * Domicilio para efectos legales. No tiene que ser un local abierto al
-   * público, pero sí un domicilio real donde puedas recibir notificaciones.
-   * PENDIENTE.
+   * público, pero sí un domicilio real donde se puedan recibir
+   * notificaciones. PENDIENTE.
    */
   domicilio: 'PENDIENTE: calle, número, colonia, Colotlán, Jalisco, C.P.',
 
-  /** Correo donde el cliente puede ejercer sus derechos ARCO. PENDIENTE. */
-  correo: 'PENDIENTE: correo de contacto',
+  /** Correo donde el cliente puede ejercer sus derechos ARCO. */
+  correo: 'jm.capsrm@gmail.com',
 
   /** Se muestra como el canal principal de atención. */
   whatsapp: '+52 33 1445 5062',
 
   zonas: 'Colotlán y Tepatitlán, Jalisco',
 
-  /** Fecha de la última revisión de los documentos legales. */
+  /**
+   * Fecha de la última revisión de los documentos legales. Se actualiza a mano
+   * y a propósito: debe reflejar una revisión deliberada, no un cambio
+   * incidental de formato.
+   */
   actualizado: '20 de septiembre de 2026',
 } as const
 
-/** Horas que dura un apartado. Debe coincidir con lo que hace la base. */
+/**
+ * Horas que dura un apartado.
+ * TAMBIÉN EN LA BASE: `apartar_unidad` usa `interval '24 hours'`.
+ */
 export const HORAS_APARTADO = 24
 
-/** Días para reportar un defecto de fábrica. PENDIENTE: confirmar. */
+/**
+ * Cuántas gorras puede tener apartadas una misma persona.
+ * TAMBIÉN EN LA BASE: `apartar_unidad` rechaza a partir de este número.
+ */
+export const MAX_APARTADOS = 3
+
+/** Días para reportar un defecto de fábrica. Solo vive aquí. */
 export const DIAS_GARANTIA = 3
 
-/** True cuando falta llenar algún dato obligatorio. */
+/** True cuando falta llenar algún dato obligatorio del aviso de privacidad. */
 export function faltanDatosLegales(): boolean {
   return Object.values(NEGOCIO).some((valor) => valor.startsWith('PENDIENTE'))
 }
