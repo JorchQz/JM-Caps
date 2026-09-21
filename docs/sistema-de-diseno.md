@@ -116,6 +116,8 @@ Antes de escribir CSS nuevo, revisa si ya existe:
 | Mensajes y estados | `.mensaje`, `.mensaje-titulo`, `.mensaje-texto` |
 | Esqueleto | `.brillo`, `.esqueleto-titulo`, `.esqueleto-linea` |
 | Pantalla de logro | `.confirmacion` y sus hijos, `.cuenta-atras` |
+| Menú | `.boton-menu`, `.rayas`, `.menu-panel`, `.menu-pie` |
+| Texto largo | `.documento` y sus hijos, vía el componente `Documento` |
 
 El bloque `.mensaje` sirve para los cinco estados vacíos o de error. No hagas
 uno nuevo: cambia el título, el texto y el botón.
@@ -148,6 +150,16 @@ terminada sin resolverlos:
 Ejemplos del tono, tomados de la tienda: "Estamos surtiendo", "Esta ya se
 apartó", "Alguien se adelantó mientras la veías", "Ajustable, le queda a
 todos", "No pagas nada ahora".
+
+### Páginas de texto largo
+
+Los documentos legales y explicativos usan el componente , que les
+da medida de línea legible y un resumen arriba: casi nadie lee un documento
+legal completo, así que la primera línea dice lo que de verdad importa.
+
+Los datos del negocio que aparecen en ellos viven en
+[](../apps/tienda/src/lib/legales.ts), no
+repartidos por el texto. Cambiar el correo o el domicilio se hace en un lugar.
 
 ### Marca
 

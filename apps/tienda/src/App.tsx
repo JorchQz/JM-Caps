@@ -10,6 +10,10 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Catalogo } from './paginas/Catalogo'
 import { Producto } from './paginas/Producto'
+import { ComoComprar } from './paginas/ComoComprar'
+import { Terminos } from './paginas/Terminos'
+import { Privacidad } from './paginas/Privacidad'
+import { Menu } from './componentes/Menu'
 import { enlaceWhatsApp } from './lib/catalogo'
 
 const cliente = new QueryClient({
@@ -48,18 +52,12 @@ function Armazon() {
               Volver
             </button>
           ) : (
-            <Link to="/">
+            <Link to="/" aria-label="Ir al catálogo">
               <img src="/logo-blanco.svg" alt="JM Caps" />
             </Link>
           )}
 
-          {enProducto ? (
-            <Link to="/" style={{ marginLeft: 'auto' }}>
-              <img src="/logo-blanco.svg" alt="JM Caps" style={{ height: 26 }} />
-            </Link>
-          ) : (
-            <span className="encabezado-lugar">Colotlán, Jal.</span>
-          )}
+          <Menu />
         </div>
       </header>
 
@@ -67,6 +65,9 @@ function Armazon() {
         <Routes>
           <Route path="/" element={<Catalogo />} />
           <Route path="/gorra/:id" element={<Producto />} />
+          <Route path="/como-comprar" element={<ComoComprar />} />
+          <Route path="/terminos" element={<Terminos />} />
+          <Route path="/aviso-de-privacidad" element={<Privacidad />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -78,6 +79,11 @@ function Armazon() {
             Colotlán y Tepatitlán. Nos vemos en el punto que acuerdes o en tu domicilio. Pagas al
             recibir: efectivo, transferencia o tarjeta con terminal.
           </p>
+          <nav className="pie-enlaces">
+            <Link to="/como-comprar">Cómo comprar</Link>
+            <Link to="/terminos">Términos y condiciones</Link>
+            <Link to="/aviso-de-privacidad">Aviso de privacidad</Link>
+          </nav>
         </div>
         <a className="pie-enlace" href={enlaceWhatsApp('Hola, tengo una duda sobre las gorras.')}>
           Escribir por WhatsApp

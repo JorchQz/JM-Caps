@@ -970,3 +970,211 @@ input {
     font-size: 13px;
   }
 }
+
+/* ----------------------------------------------------------------- menú */
+
+.boton-menu {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.rayas {
+  display: block;
+  width: 22px;
+}
+
+.rayas span {
+  display: block;
+  height: 2px;
+  background: var(--nieve);
+  border-radius: 2px;
+  transition: transform 160ms ease, opacity 120ms ease;
+}
+
+.rayas span + span {
+  margin-top: 5px;
+}
+
+/* Las rayas se vuelven una cruz: el mismo botón abre y cierra, y el cambio
+   muestra cuál de los dos estados está activo. */
+.rayas.abiertas span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.rayas.abiertas span:nth-child(2) {
+  opacity: 0;
+}
+
+.rayas.abiertas span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.menu-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: 10;
+  background: var(--tinta);
+  border-top: 1px solid var(--linea-oscura);
+  animation: jmEntra 0.16s ease both;
+}
+
+.menu-panel nav {
+  display: flex;
+  flex-direction: column;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 6px 16px 10px;
+}
+
+.menu-panel a {
+  padding: 14px 0;
+  color: var(--nieve);
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--linea-oscura);
+}
+
+.menu-panel a:last-child {
+  border-bottom: 0;
+  color: #8fa3f0;
+}
+
+.menu-panel a:hover {
+  color: var(--gris-hondo);
+}
+
+.menu-panel a[aria-current='page'] {
+  color: var(--gris-hondo);
+}
+
+.menu-pie {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px 16px;
+  font-size: 12px;
+  color: var(--tinta-tenue);
+}
+
+@media (min-width: 760px) {
+  .menu-panel nav,
+  .menu-pie {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
+
+/* El panel se ancla al encabezado, que es quien define el contexto. */
+.encabezado {
+  position: sticky;
+  top: 0;
+}
+
+.encabezado-fila {
+  position: relative;
+}
+
+/* ------------------------------------------------------------ documentos */
+
+.documento {
+  padding: 28px 16px 48px;
+  max-width: 68ch;
+}
+
+.documento-titulo {
+  margin: 0;
+  font-size: clamp(28px, 8vw, 40px);
+  line-height: 1.04;
+  font-weight: 800;
+  font-stretch: 118%;
+  letter-spacing: -0.02em;
+}
+
+/* Casi nadie lee un documento legal completo: lo primero que se ve dice lo
+   que de verdad importa. */
+.documento-resumen {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  background: var(--nieve);
+  border-left: 4px solid var(--cobalto);
+  border-radius: 6px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.documento-cuerpo {
+  margin-top: 28px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.documento-cuerpo h2 {
+  margin: 30px 0 8px;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 800;
+  font-stretch: 112%;
+}
+
+.documento-cuerpo h3 {
+  margin: 22px 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.documento-cuerpo p {
+  margin: 0 0 12px;
+}
+
+.documento-cuerpo ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.documento-cuerpo li {
+  margin-bottom: 7px;
+}
+
+.documento-pie {
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid var(--borde);
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+.documento-pie p {
+  margin: 0 0 10px;
+}
+
+@media (min-width: 760px) {
+  .documento {
+    padding: 40px 28px 64px;
+  }
+}
+
+/* -------------------------------------------------- enlaces legales al pie */
+
+.pie-enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 14px;
+}
+
+.pie-enlaces a {
+  color: var(--borde);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.pie-enlaces a:hover {
+  color: var(--nieve);
+}
