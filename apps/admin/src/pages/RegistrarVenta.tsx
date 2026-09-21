@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CANALES_VENTA,
@@ -17,6 +17,7 @@ import {
 } from '../lib/consultas'
 import { Aviso, Campo, Cargando, EncabezadoPagina, MensajeError, Vacio } from '../components/ui'
 import { EscanerQR } from '../components/EscanerQR'
+import { esPunteroFino } from '../lib/enfoque'
 import { usePersistente } from '../lib/persistencia'
 import {
   encolarVenta,
@@ -28,6 +29,13 @@ import {
 export function RegistrarVenta() {
   const clienteQuery = useQueryClient()
   const campoBusqueda = useRef<HTMLInputElement>(null)
+
+  // Con mouse, enfocar el campo ahorra un clic. Con dedo abre el teclado y
+  // encoge la pantalla justo al entrar a la seccion, que es lo contrario de
+  // lo que se necesita.
+  useEffect(() => {
+    if (esPunteroFino()) campoBusqueda.current?.focus()
+  }, [])
 
   const [busqueda, setBusqueda] = useState('')
   const [escaneando, setEscaneando] = useState(false)
@@ -227,7 +235,6 @@ export function RegistrarVenta() {
                 placeholder="Folio o nombre del modelo"
                 inputMode="numeric"
                 style={{ flex: '1 1 200px' }}
-                autoFocus
               />
               <button
                 type="button"

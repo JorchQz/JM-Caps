@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
+import { useEnfoqueEscritorio } from '../lib/enfoque'
 import { Aviso, Campo } from '../components/ui'
 
 export function Login() {
@@ -7,6 +8,7 @@ export function Login() {
   const [contrasena, setContrasena] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const primerCampo = useEnfoqueEscritorio<HTMLInputElement>()
 
   async function entrar(evento: FormEvent) {
     evento.preventDefault()
@@ -50,7 +52,7 @@ export function Login() {
             onChange={(evento) => setCorreo(evento.target.value)}
             autoComplete="username"
             required
-            autoFocus
+            ref={primerCampo}
           />
         </Campo>
 

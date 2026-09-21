@@ -24,6 +24,7 @@ import {
 import { Aviso, Campo, EncabezadoPagina, MensajeError } from '../components/ui'
 import { SelectorTalla } from '../components/SelectorTalla'
 import { usePersistente } from '../lib/persistencia'
+import { useEnfoqueEscritorio } from '../lib/enfoque'
 
 type Paso =
   | { tipo: 'buscar' }
@@ -40,6 +41,7 @@ function destinoSegunLote(estado: EstadoLote | null): string {
 
 export function RegistrarProductos() {
   const [link, setLink] = useState('')
+  const campoLink = useEnfoqueEscritorio<HTMLInputElement>()
   const [loteId, setLoteId] = useState('')
   const [lineaActiva, setLineaActiva] = useState<LineaConModelo | null>(null)
   const [paso, setPaso] = useState<Paso>({ tipo: 'buscar' })
@@ -194,7 +196,7 @@ export function RegistrarProductos() {
               value={link}
               onChange={(evento) => setLink(evento.target.value)}
               placeholder="https://worldcaps.x.yupoo.com/albums/000000000"
-              autoFocus
+              ref={campoLink}
             />
           </Campo>
 

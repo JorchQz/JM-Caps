@@ -196,6 +196,40 @@ Los colores de estado tienen significado fijo: `--exito` para disponible,
 `--alerta` para apartado, `--error` para lo destructivo. Están calibrados para
 leerse sobre fondo claro, que es distinto de lo que pedía el fondo oscuro.
 
+### Navegación: lateral en la computadora, iconos al pie en el celular
+
+Arriba de 860 px la navegación es la barra lateral oscura con los nombres
+completos. Abajo de 860 px esa barra se oculta por completo y aparecen dos
+piezas: una barra superior delgada con el logo y "Cerrar sesión", y una
+**barra fija al pie con los seis iconos** de las secciones.
+
+Va abajo y no como menú hamburguesa por dos razones: el panel se usa con el
+teléfono en una mano y una gorra en la otra, así que el pulgar tiene que
+llegar sin reacomodar; y una hamburguesa cobra un toque extra por cada
+cambio de pantalla, que en una jornada de captura se siente.
+
+Los iconos son de `lucide-react`, nunca emojis. Al agregar una sección nueva
+se añade una entrada a `SECCIONES` en
+[`apps/admin/src/components/Layout.tsx`](../apps/admin/src/components/Layout.tsx)
+con su `icono` y un `corto` de una sola palabra: son seis columnas iguales y
+una etiqueta larga se corta. Debajo de 380 px las etiquetas desaparecen y
+quedan solo los iconos, por eso cada enlace lleva `aria-label`.
+
+`.contenido` ya reserva el espacio del pie, así que una pantalla nueva no
+tiene que hacer nada — salvo llevar `no-imprimir` en cualquier barra propia.
+
+### El foco automático es solo de escritorio
+
+Enfocar el primer campo al entrar a una pantalla ahorra un clic con mouse,
+pero en el celular abre el teclado, encoge la página y hay que cerrarlo antes
+de poder ver nada. **No uses `autoFocus`**: usa `useEnfoqueEscritorio()` de
+[`apps/admin/src/lib/enfoque.ts`](../apps/admin/src/lib/enfoque.ts), que solo
+enfoca cuando el puntero es fino.
+
+La excepción es el foco que responde a una acción de la persona — abrir "Otra
+talla", agregar una pieza al carrito escribiendo el folio. Ahí el teclado es
+justo lo que se está pidiendo.
+
 ### Tablas en el celular
 
 El panel se usa principalmente en un teléfono de unos 390 px de ancho, y varias

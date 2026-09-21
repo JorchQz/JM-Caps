@@ -77,6 +77,12 @@ a {
   min-height: 100%;
 }
 
+/* Las barras del celular no existen en escritorio: ahi manda la lateral. */
+.barra-movil,
+.barra-inferior {
+  display: none;
+}
+
 .barra-lateral {
   width: 220px;
   flex: 0 0 220px;
@@ -497,59 +503,93 @@ tr:last-child td {
   }
 
   /*
-    Barra superior compacta. Antes era una fila con desbordamiento lateral:
-    ocupaba un tercio de la pantalla y dejaba Apartados, Lotes e Historial
-    fuera de alcance. Ahora es una retícula de dos renglones y los enlaces
-    bajan de línea en vez de salirse.
+    En el celular la navegación deja de ser una lista de texto arriba. Ahí
+    ocupaba media pantalla y los enlaces que no cabían quedaban fuera de
+    alcance. Baja al pie como iconos: el panel se usa con el teléfono en una
+    mano y una gorra en la otra, y abajo el pulgar llega sin reacomodar.
   */
   .barra-lateral {
-    width: 100%;
-    flex: none;
-    height: auto;
-    min-height: 0;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 8px 12px;
-    padding: 8px 12px;
-    overflow: visible;
-  }
-
-  .marca-logo {
-    height: 22px;
-  }
-
-  .navegacion {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .navegacion a {
-    padding: 6px 10px;
-    font-size: 0.84rem;
-    white-space: nowrap;
-  }
-
-  .pie-sesion {
-    grid-column: 2;
-    justify-self: end;
-    flex-direction: row;
-    align-items: center;
-    margin: 0;
-    gap: 8px;
-  }
-
-  .pie-sesion .correo {
     display: none;
   }
 
+  .barra-movil {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 8px 14px;
+    background: var(--tinta);
+    color: var(--nieve);
+  }
+
+  .barra-movil img {
+    height: 22px;
+    width: auto;
+    display: block;
+  }
+
+  .barra-movil button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--gris-hondo);
+    font-size: 0.8rem;
+    padding: 7px 11px;
+    border-radius: var(--radio);
+  }
+
+  .barra-inferior {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    background: var(--tinta);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 6px 2px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .barra-inferior a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 48px;
+    padding: 5px 2px;
+    border-radius: var(--radio);
+    text-decoration: none;
+    color: var(--tinta-tenue);
+  }
+
+  .barra-inferior a span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.64rem;
+    line-height: 1.1;
+  }
+
+  .barra-inferior a.activo {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--nieve);
+  }
+
+  .barra-inferior a.activo svg {
+    color: var(--cobalto-claro);
+  }
+
+  .barra-inferior a:active {
+    transform: scale(0.95);
+  }
+
   .contenido {
-    padding: 16px 14px 48px;
+    /* El último renglón de cada pantalla tiene que quedar arriba de la
+       barra fija, no debajo. */
+    padding: 16px 14px calc(78px + env(safe-area-inset-bottom, 0px));
   }
 
   .encabezado-pagina {
@@ -688,15 +728,17 @@ tr:last-child td {
   .marca-logo {
     height: 24px;
   }
+}
 
-  .barra-lateral {
-    gap: 10px;
-    padding: 10px 12px;
+/* A 360px las seis etiquetas de la barra inferior ya no caben completas;
+   antes que cortarlas a la mitad, quedan solo los iconos. */
+@media (max-width: 380px) {
+  .barra-inferior a span {
+    display: none;
   }
 
-  .navegacion a {
-    padding: 8px 10px;
-    font-size: 0.88rem;
+  .barra-inferior a {
+    min-height: 44px;
   }
 }
 

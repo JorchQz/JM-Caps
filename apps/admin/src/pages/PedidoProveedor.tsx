@@ -39,6 +39,7 @@ import {
 import { descargarPdfPedido, textoPedido } from '../lib/pedidoProveedor'
 import { consultarTipoCambio } from '../lib/tipoCambio'
 import { SelectorTalla } from '../components/SelectorTalla'
+import { useEnfoqueEscritorio } from '../lib/enfoque'
 import {
   Aviso,
   Campo,
@@ -804,6 +805,7 @@ function FilaLinea({
 // ---------------------------------------------------------------------------
 
 function NuevaLinea({ loteId, alAgregar }: { loteId: string; alAgregar: () => void }) {
+  const campoLink = useEnfoqueEscritorio<HTMLInputElement>()
   const [link, setLink] = useState('')
   const [talla, setTalla] = useState<string | null>(null)
   const [cantidad, setCantidad] = useState('1')
@@ -852,7 +854,7 @@ function NuevaLinea({ loteId, alAgregar }: { loteId: string; alAgregar: () => vo
             value={link}
             onChange={(evento) => setLink(evento.target.value)}
             placeholder="https://worldcaps.x.yupoo.com/albums/000000000"
-            autoFocus
+            ref={campoLink}
           />
         </Campo>
 
