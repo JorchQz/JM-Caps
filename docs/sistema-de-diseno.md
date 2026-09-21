@@ -134,6 +134,9 @@ terminada sin resolverlos:
 ### Voz
 
 - Español de México, de tú, directo.
+- **La tienda habla en plural de negocio** (nosotros): "te la entregamos", "escríbenos". Los botones, en cambio, hablan como el cliente: "Apartar a mi nombre", "Avísame por WhatsApp".
+- Sin coloquialismos ambiguos ni jerga interna. "Ahorita" puede significar ya o al rato, y el cliente no sabe qué es "la caja".
+- **Los mensajes de error de la base también los lee el cliente**: la función `apartar_unidad` los escribe en la misma voz.
 - **Sin emojis**, en ninguna parte.
 - Los errores no piden disculpas ni son vagos: dicen qué pasó y qué hacer.
 - Una pantalla vacía es una invitación a actuar, no un lamento.
@@ -142,8 +145,9 @@ terminada sin resolverlos:
   cliente.** Se traducen con `TIPOS_CLIENTE` en
   [`apps/tienda/src/lib/catalogo.ts`](../apps/tienda/src/lib/catalogo.ts).
 
-Ejemplos del tono, tomados de la tienda: "Esta ya voló", "Se está surtiendo",
-"Ajustable, le queda a todos", "No pagas nada ahora".
+Ejemplos del tono, tomados de la tienda: "Estamos surtiendo", "Esta ya se
+apartó", "Alguien se adelantó mientras la veías", "Ajustable, le queda a
+todos", "No pagas nada ahora".
 
 ### Marca
 

@@ -60,9 +60,9 @@ export function Producto() {
   if (error || !data) {
     return (
       <div className="mensaje">
-        <div className="mensaje-titulo">Esta ya voló</div>
+        <div className="mensaje-titulo">Esta ya se apartó</div>
         <p className="mensaje-texto">
-          Alguien la apartó mientras la veías. Pasa seguido con las últimas piezas. Hay más en el
+          Alguien se adelantó mientras la veías. Pasa seguido con las últimas piezas. Hay más en el
           catálogo.
         </p>
         <Link className="boton-mensaje" to="/">
@@ -96,7 +96,7 @@ export function Producto() {
     ? 'Elige tu talla para continuar'
     : nombre.trim().length < 2
       ? 'Escribe tu nombre'
-      : 'El WhatsApp va a 10 dígitos'
+      : 'Escribe tu WhatsApp a 10 dígitos'
 
   return (
     <>
@@ -154,7 +154,7 @@ export function Producto() {
       >
         <div className="formulario-titulo">Apártala {HORAS_APARTADO} horas</div>
         <div className="formulario-nota">
-          No pagas nada ahora. Pagas cuando te la entrego en mano.
+          No pagas nada ahora. Pagas cuando te la entregamos en mano.
         </div>
 
         <label className="etiqueta" htmlFor="jm-nombre">
@@ -166,7 +166,7 @@ export function Producto() {
           type="text"
           value={nombre}
           onChange={(evento) => setNombre(evento.target.value)}
-          placeholder="Como te digan"
+          placeholder="Nombre y apellido"
           autoComplete="name"
         />
 
@@ -245,7 +245,7 @@ function Confirmacion({
         <div className="cuenta-atras-rotulo">Te quedan</div>
         <div className="cuenta-atras-cifra">{tiempoRestante(vence, ahora)}</div>
         <div className="cuenta-atras-nota">
-          Si no me escribes en ese tiempo, la gorra regresa al catálogo.
+          Si no nos escribes en ese tiempo, la gorra regresa al catálogo.
         </div>
       </div>
 

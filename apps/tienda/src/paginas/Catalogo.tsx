@@ -12,7 +12,7 @@ import {
 import { compararTallas } from '../lib/tallas'
 
 const TEXTO_ENTREGA =
-  'Todas están físicamente en mano. La apartas hoy y te la entrego hoy mismo en Colotlán.'
+  'Todas están físicamente en mano. La apartas hoy y te la entregamos hoy mismo en Colotlán.'
 
 type Filtros = { tipo: string | null; talla: string | null; equipo: string | null }
 
@@ -74,7 +74,7 @@ export function Catalogo() {
   if (error) {
     return (
       <div className="mensaje">
-        <div className="mensaje-titulo">No cargó el catálogo</div>
+        <div className="mensaje-titulo">No pudimos cargar el catálogo</div>
         <p className="mensaje-texto">
           Se cortó la conexión antes de traer las gorras. Revisa tus datos y vuelve a intentar.
         </p>
@@ -88,14 +88,14 @@ export function Catalogo() {
   if (productos.length === 0) {
     return (
       <div className="mensaje">
-        <div className="mensaje-titulo">Se está surtiendo</div>
+        <div className="mensaje-titulo">Estamos surtiendo</div>
         <p className="mensaje-texto">
-          Ahorita no hay piezas en mano. Llega mercancía cada semana; escríbeme y te aviso en
-          cuanto baje la caja.
+          Por ahora no tenemos piezas disponibles. Recibimos mercancía cada semana. Escríbenos y te
+          avisamos en cuanto llegue.
         </p>
         <a
           className="boton-mensaje"
-          href={enlaceWhatsApp('Hola, avísame cuando llegue mercancía nueva.')}
+          href={enlaceWhatsApp('Hola, avísenme cuando llegue mercancía nueva.')}
         >
           Avísame por WhatsApp
         </a>
@@ -146,8 +146,8 @@ export function Catalogo() {
         <div className="mensaje">
           <div className="mensaje-titulo">Nada con esos filtros</div>
           <p className="mensaje-texto">
-            Quita uno y vuelve a ver: hay {piezas} {piezas === 1 ? 'gorra' : 'gorras'} en mano
-            ahorita.
+            Quita uno y vuelve a ver: hay {piezas} {piezas === 1 ? 'gorra' : 'gorras'} disponibles
+            en total.
           </p>
           <button
             type="button"
