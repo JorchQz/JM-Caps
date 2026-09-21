@@ -8,6 +8,7 @@ import {
   cargarProducto,
   enlaceWhatsApp,
   precioEnPesos,
+  preciosDe,
 } from '../lib/catalogo'
 import { compararTallas } from '../lib/tallas'
 import { HORAS_APARTADO } from '../lib/legales'
@@ -79,13 +80,14 @@ export function Producto() {
         nombreCliente={nombre.trim().split(' ')[0] ?? ''}
         talla={apartada.talla}
         vence={apartada.vence}
-        precio={data.precio_venta_mxn}
+        precio={data.precio_efectivo_mxn ?? data.precio_venta_mxn}
         alVolver={() => navegar('/')}
       />
     )
   }
 
   const tipo = data.categoria ? TIPOS_CLIENTE[data.categoria as Categoria] : null
+  const precios = preciosDe(data)
   const meta = [data.equipo, data.color].filter(Boolean).join(' · ')
   const stock = data.stock_disponible ?? 0
   const faltaTalla = conTalla && !talla
@@ -109,13 +111,19 @@ export function Producto() {
         {stock <= 2 ? (
           <span className="escasez">{stock === 1 ? 'Última pieza' : 'Quedan 2'}</span>
         ) : null}
+        {precios.hayOferta ? <span className="marca-oferta">Rebajada</span> : null}
       </div>
 
       <div className="producto-cabecera">
         {tipo ? <div className="rotulo">{tipo}</div> : null}
         <h1 className="producto-nombre">{data.nombre}</h1>
         {meta ? <div className="producto-meta">{meta}</div> : null}
-        <div className="producto-precio">{precioEnPesos(data.precio_venta_mxn)}</div>
+        <div className="producto-precio">
+          {precios.hayOferta ? (
+            <span className="precio-antes">{precioEnPesos(precios.lista)}</span>
+          ) : null}
+          {precioEnPesos(precios.final)}
+        </div>
         {data.descripcion ? <p className="producto-desc">{data.descripcion}</p> : null}
       </div>
 

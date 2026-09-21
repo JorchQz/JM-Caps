@@ -13,6 +13,7 @@ import { Lotes } from './pages/Lotes'
 import { RecepcionLote } from './pages/RecepcionLote'
 import { PedidoProveedor } from './pages/PedidoProveedor'
 import { Historial } from './pages/Historial'
+import { Precios } from './pages/Precios'
 
 const cliente = new QueryClient({
   defaultOptions: {
@@ -41,6 +42,7 @@ function Rutas() {
         <Route path="lotes" element={<Lotes />} />
         <Route path="lotes/:id/pedido" element={<PedidoProveedor />} />
         <Route path="lotes/:id/recibir" element={<RecepcionLote />} />
+        <Route path="precios" element={<Precios />} />
         <Route path="ventas" element={<Historial />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -32,7 +32,7 @@ export const NEGOCIO = {
    * y a propósito: debe reflejar una revisión deliberada, no un cambio
    * incidental de formato.
    */
-  actualizado: '20 de septiembre de 2026',
+  actualizado: '21 de septiembre de 2026',
 } as const
 
 /**

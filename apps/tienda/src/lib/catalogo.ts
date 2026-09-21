@@ -74,6 +74,20 @@ export async function apartar(datos: DatosApartado): Promise<string> {
   return data as string
 }
 
+/**
+ * Los dos precios de una gorra. El efectivo ya viene calculado por la base:
+ * la tienda no vuelve a aplicar el descuento, solo lo pinta.
+ */
+export function preciosDe(producto: Producto): {
+  lista: number | null
+  final: number | null
+  hayOferta: boolean
+} {
+  const lista = producto.precio_venta_mxn
+  const final = producto.precio_efectivo_mxn ?? lista
+  return { lista, final, hayOferta: lista !== null && final !== null && final < lista }
+}
+
 export function precioEnPesos(valor: number | null): string {
   if (valor === null) return ''
   return '$' + new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 }).format(valor)

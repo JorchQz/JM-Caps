@@ -355,6 +355,41 @@ input {
   border-radius: 3px;
 }
 
+/*
+  Marca de rebaja. Va en tinta y no en rojo a proposito: el rojo esta
+  reservado para la escasez real, y si se usa tambien para adornar una
+  oferta deja de significar urgencia.
+*/
+.marca-oferta {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  background: var(--tinta);
+  color: var(--nieve);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 3px;
+}
+
+.producto-foto .marca-oferta {
+  right: 12px;
+  top: 12px;
+  font-size: 11px;
+  padding: 4px 9px;
+}
+
+/* El precio de antes, tachado, justo antes del nuevo. */
+.precio-antes {
+  margin-right: 7px;
+  color: var(--tinta-suave);
+  font-weight: 600;
+  text-decoration: line-through;
+  font-size: 0.78em;
+}
+
 .tarjeta-cuerpo {
   display: flex;
   flex-direction: column;

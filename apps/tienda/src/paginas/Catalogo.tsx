@@ -7,6 +7,7 @@ import {
   cargarCatalogo,
   enlaceWhatsApp,
   precioEnPesos,
+  preciosDe,
   type Producto,
 } from '../lib/catalogo'
 import { compararTallas } from '../lib/tallas'
@@ -210,6 +211,7 @@ function Tarjeta({ producto }: { producto: Producto }) {
   const stock = producto.stock_disponible ?? 0
   const tipo = producto.categoria ? TIPOS_CLIENTE[producto.categoria as Categoria] : null
   const meta = [producto.color, tipo].filter(Boolean).join(' · ')
+  const precios = preciosDe(producto)
 
   return (
     <Link className="tarjeta" to={`/gorra/${producto.modelo_id}`}>
@@ -222,12 +224,18 @@ function Tarjeta({ producto }: { producto: Producto }) {
         {stock <= 2 ? (
           <span className="escasez">{stock === 1 ? 'Última pieza' : 'Quedan 2'}</span>
         ) : null}
+        {precios.hayOferta ? <span className="marca-oferta">Rebajada</span> : null}
       </div>
 
       <div className="tarjeta-cuerpo">
         <div className="tarjeta-nombre">{producto.nombre}</div>
         {meta ? <div className="tarjeta-meta">{meta}</div> : null}
-        <div className="tarjeta-precio">{precioEnPesos(producto.precio_venta_mxn)}</div>
+        <div className="tarjeta-precio">
+          {precios.hayOferta ? (
+            <span className="precio-antes">{precioEnPesos(precios.lista)}</span>
+          ) : null}
+          {precioEnPesos(precios.final)}
+        </div>
 
         <div className="tallas-lista">
           {tallas.length === 0 ? (

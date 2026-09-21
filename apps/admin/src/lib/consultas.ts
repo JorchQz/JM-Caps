@@ -1,4 +1,4 @@
-import type { Categoria, Tables } from '@jm-caps/db'
+import type { Categoria, Tables, TipoDescuento } from '@jm-caps/db'
 import { normalizarLinkYupoo } from '@jm-caps/db'
 import { supabase } from './supabase'
 import { comprimirFoto } from './imagen'
@@ -22,6 +22,7 @@ export const llaves = {
   configuracion: (clave: string) => ['configuracion', clave] as const,
   apartados: ['apartados'] as const,
   ventas: ['ventas'] as const,
+  cupones: ['cupones'] as const,
 }
 
 function fallar(mensaje: string, error: { message: string } | null): never {
@@ -628,6 +629,8 @@ export type DatosVenta = {
   cliente_nombre: string | null
   cliente_telefono: string | null
   notas: string | null
+  /** Codigo tal cual lo dicto el cliente. La base lo valida y lo cuenta. */
+  cupon: string | null
 }
 
 export async function registrarVenta(datos: DatosVenta): Promise<string> {
@@ -638,6 +641,7 @@ export async function registrarVenta(datos: DatosVenta): Promise<string> {
     p_cliente_nombre: datos.cliente_nombre,
     p_cliente_telefono: datos.cliente_telefono,
     p_notas: datos.notas,
+    p_cupon_codigo: datos.cupon,
   })
 
   if (error) fallar('No se pudo registrar la venta', error)
@@ -683,4 +687,121 @@ export async function subirFoto(archivo: File, carpeta: string): Promise<string>
 
   const { data } = supabase.storage.from(BUCKET_FOTOS).getPublicUrl(nombre)
   return data.publicUrl
+}
+
+// ---------------------------------------------------------------------------
+// Precios, ofertas y cupones
+// ---------------------------------------------------------------------------
+
+export type CambioPrecio = { id: string; precio_venta_mxn: number }
+
+/**
+ * Guarda varios precios de lista de un jalón.
+ *
+ * Son updates sueltos y no una sola sentencia porque PostgREST no hace un
+ * update masivo con valores distintos por fila. A la escala de este catálogo
+ * (decenas de modelos) es irrelevante, y a cambio cada fila queda protegida
+ * por RLS igual que siempre.
+ */
+export async function guardarPrecios(cambios: CambioPrecio[]): Promise<number> {
+  const validos = cambios.filter((c) => Number.isFinite(c.precio_venta_mxn) && c.precio_venta_mxn > 0)
+  if (validos.length === 0) return 0
+
+  const resultados = await Promise.all(
+    validos.map((cambio) =>
+      supabase
+        .from('modelos')
+        .update({ precio_venta_mxn: cambio.precio_venta_mxn })
+        .eq('id', cambio.id),
+    ),
+  )
+
+  const fallo = resultados.find((r) => r.error)
+  if (fallo?.error) fallar('No se pudieron guardar los precios', fallo.error)
+
+  return validos.length
+}
+
+export type DatosOferta = {
+  tipo: TipoDescuento
+  valor: number
+  /** ISO, o null para que la oferta siga hasta quitarla a mano. */
+  hasta: string | null
+  nota: string | null
+}
+
+export async function aplicarOferta(modeloIds: string[], oferta: DatosOferta): Promise<number> {
+  if (modeloIds.length === 0) return 0
+
+  const { error } = await supabase
+    .from('modelos')
+    .update({
+      oferta_tipo: oferta.tipo,
+      oferta_valor: oferta.valor,
+      oferta_hasta: oferta.hasta,
+      oferta_nota: oferta.nota,
+    })
+    .in('id', modeloIds)
+
+  if (error) fallar('No se pudo aplicar la oferta', error)
+  return modeloIds.length
+}
+
+export async function quitarOferta(modeloIds: string[]): Promise<number> {
+  if (modeloIds.length === 0) return 0
+
+  const { error } = await supabase
+    .from('modelos')
+    .update({ oferta_tipo: null, oferta_valor: null, oferta_hasta: null, oferta_nota: null })
+    .in('id', modeloIds)
+
+  if (error) fallar('No se pudo quitar la oferta', error)
+  return modeloIds.length
+}
+
+export type Cupon = Tables<'cupones'>
+
+export async function cargarCupones(): Promise<Cupon[]> {
+  const { data, error } = await supabase
+    .from('cupones')
+    .select('*')
+    .order('creado_en', { ascending: false })
+
+  if (error) fallar('No se pudieron cargar los cupones', error)
+  return data ?? []
+}
+
+export type DatosCupon = {
+  codigo: string
+  tipo: TipoDescuento
+  valor: number
+  minimo_mxn: number
+  usos_maximos: number | null
+  vence: string | null
+  nota: string | null
+}
+
+export async function crearCupon(datos: DatosCupon): Promise<Cupon> {
+  const { data, error } = await supabase
+    .from('cupones')
+    .insert({ ...datos, codigo: datos.codigo.trim().toUpperCase() })
+    .select()
+    .single()
+
+  if (error) fallar('No se pudo crear el cupón', error)
+  return data
+}
+
+/** El contador de usos no se toca desde aquí: lo lleva registrar_venta. */
+export async function actualizarCupon(
+  codigo: string,
+  cambios: Partial<Omit<Cupon, 'codigo' | 'usos' | 'creado_en'>>,
+): Promise<void> {
+  const { error } = await supabase.from('cupones').update(cambios).eq('codigo', codigo)
+  if (error) fallar('No se pudo actualizar el cupón', error)
+}
+
+export async function eliminarCupon(codigo: string): Promise<void> {
+  const { error } = await supabase.from('cupones').delete().eq('codigo', codigo)
+  if (error) fallar('No se pudo eliminar el cupón', error)
 }

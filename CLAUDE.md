@@ -56,6 +56,22 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 5. Pago: efectivo, transferencia SPEI o tarjeta con la terminal Mercado Pago Point, contra entrega en persona. **No hay pago en línea todavía.** La terminal se usa por separado: se teclea el monto ahí. Integrarla al panel es posible (API de Point: crear la orden y recibir el webhook) pero exige un backend con el access token guardado como secreto, y no se justifica hasta que el volumen lo pida.
 6. **No hay bot de WhatsApp todavía** — la atención personal es la ventaja competitiva en un pueblo chico. Se reconsidera solo si el volumen de mensajes lo justifica.
 
+## Precios, ofertas y cupones
+
+Son tres cosas distintas y conviene no mezclarlas:
+
+- El **precio de lista** (`modelos.precio_venta_mxn`) es lo que vale la gorra.
+- Una **oferta** vive en el modelo y la ve el cliente en la tienda con el precio anterior tachado y la marca "Rebajada". **Se guarda el descuento, no el precio resultante**, para que al subir el precio de lista la oferta lo siga en vez de quedarse congelada en una cifra vieja. Puede tener fecha de término; sin fecha dura hasta que se quite.
+- Un **cupón** se aplica al total de la venta, encima de cualquier oferta que ya traigan las piezas. **No aparece en la tienda**: como no hay pago en línea, el cliente no puede canjearlo solo. El código se le da por WhatsApp y se captura al cobrar.
+
+Todo esto se administra en **Precios y ofertas** (`/precios`, se entra desde Inventario): tabla con todos los precios editables, ajuste masivo por porcentaje o monto sobre lo que el filtro deja a la vista, ofertas por selección, y alta de cupones.
+
+El ajuste masivo **escribe los valores en la tabla pero no los guarda**: hay que revisarlos y confirmar. Un error de dedo en un ajuste de cincuenta modelos se arregla descartando, no modelo por modelo.
+
+La validación de un cupón está escrita dos veces a propósito: en `registrar_venta`, que es la que manda, y en `revisarCupon` de `packages/db/src/descuentos.ts`, que avisa al teclear el código para no descubrir que no servía con el cliente enfrente. Lo mismo pasa con `precio_efectivo` y `precioEfectivo`. Si cambia una, cambia la otra.
+
+El rojo (`--ultima`) sigue reservado para la escasez real. La marca de rebaja va en tinta: si el rojo se usa también para adornar ofertas, deja de comunicar urgencia.
+
 ## Modelo de datos: "modelo" vs "unidad" (clave para entender el esquema)
 
 - Un **modelo** = el producto que ve el cliente = una combinación única de diseño + color + categoría (ej. "Yankees Negro AA"). Tiene un precio, una foto, un código único.
@@ -90,7 +106,7 @@ Las gorras con logos de ligas deportivas (MLB, etc.) son réplicas — existe ri
 ### Tablas
 
 **`modelos`** — el producto visible al cliente
-- `id` (uuid, pk), `codigo` (text, unique — lo genera la base, formato `AA-001`), `categoria` (enum: AA/AAS/UU/UUS/K/DH), `nombre` (text), `equipo` (text, null en diseños sin logo), `color` (text), `descripcion` (text), `precio_venta_mxn` (numeric), `foto_url` (text), `link_yupoo` (text, **unique y not null** — es la llave real para saber si un modelo ya existe al dar de alta mercancía nueva), `activo` (boolean)
+- `id` (uuid, pk), `codigo` (text, unique — lo genera la base, formato `AA-001`), `categoria` (enum: AA/AAS/UU/UUS/K/DH), `nombre` (text), `equipo` (text, null en diseños sin logo), `color` (text), `descripcion` (text), `precio_venta_mxn` (numeric), `foto_url` (text), `link_yupoo` (text, **unique y not null** — es la llave real para saber si un modelo ya existe al dar de alta mercancía nueva), `activo` (boolean), `oferta_tipo` (enum: porcentaje/monto, null si no hay oferta), `oferta_valor` (numeric), `oferta_hasta` (timestamptz, null = hasta quitarla a mano), `oferta_nota` (text, interna)
 
 **`unidades`** — una fila = una gorra física. El `folio` es el valor que va en el QR de la etiqueta y el que se escanea al vender.
 - `id` (uuid, pk), `folio` (text, unique — número corto de 6 dígitos, se genera solo), `modelo_id` (fk → modelos), `linea_id` (fk → pedido_lineas, de qué línea del pedido salió), `lote_id` (fk → lotes), `talla` (text, null si es ajustable), `costo_unitario_mxn` (numeric), `estado` (enum: pedido/en_transito/disponible/apartada/vendida), `apartado_hasta` (timestamptz), `apartado_nombre` (text), `apartado_telefono` (text), `foto_real_url` (text — foto de la unidad física real, no la del proveedor), `fecha_alta` (timestamptz), `fecha_venta` (timestamptz)
@@ -117,8 +133,11 @@ UU y UUS no tienen precios: están pausadas.
 - `clave` (text, pk), `valor` (text), `descripcion` (text)
 - `base_escalon`: qué cantidad decide el escalón de precio — `diseno`, `categoria` o `pedido`. **Está en `categoria`, confirmado por el proveedor:** la oferta por volumen aplica por tipo de gorra, así que 30 AA repartidas en varios diseños ya alcanzan el escalón de 30. DH tiene su propia escalera porque es más cara y más difícil de fabricar.
 
+**`cupones`** — códigos de descuento sobre el total de una venta. **Nunca se exponen al público**: el rol `anon` no tiene ningún permiso sobre esta tabla. Como no hay pago en línea, el cliente no puede canjear un cupón solo; el código se le da por WhatsApp y se captura en Registrar venta.
+- `codigo` (text, pk, siempre en mayúsculas), `tipo` (enum: porcentaje/monto), `valor` (numeric), `minimo_mxn` (numeric — compra mínima), `usos_maximos` (int, null = sin límite), `usos` (int — lo lleva `registrar_venta`, no se toca a mano), `vence` (date), `activo` (boolean), `nota` (text, interna)
+
 **`ventas`** — encabezado de cada venta
-- `id` (uuid, pk), `fecha`, `total_mxn`, `metodo_pago` (enum: efectivo/spei/otro), `canal` (enum: local_colotlan/local_tepatitlan/envio_nacional), `cliente_nombre`, `cliente_telefono`
+- `id` (uuid, pk), `fecha`, `subtotal_mxn` (suma de las piezas ya con su oferta), `descuento_mxn` (lo que quitó el cupón), `total_mxn` (lo que de verdad se cobró), `cupon_codigo` (fk → cupones, null), `metodo_pago` (enum: efectivo/spei/tarjeta/otro), `canal` (enum: local_colotlan/local_tepatitlan/envio_nacional), `cliente_nombre`, `cliente_telefono`
 
 **`venta_items`** — une ventas con las unidades específicas vendidas
 - `id` (uuid, pk), `venta_id` (fk), `unidad_id` (fk, unique — cada unidad se vende una sola vez), `precio_mxn`
@@ -140,7 +159,8 @@ Las siguientes son solo para el admin (`security invoker`, sujetas a RLS). Exist
 - **`agregar_unidades(p_modelo_id, p_cantidad, p_talla, p_lote_id, p_costo_unitario_mxn, p_linea_id)`** — crea N piezas físicas. El estado inicial sigue al del lote: si el lote está en `pedido`, las piezas nacen en `pedido`. Rechaza lotes en `borrador`: el proveedor todavía no confirma qué va a mandar.
 - **`confirmar_pedido(p_lote_id)`** — cierra el borrador: marca como confirmadas las líneas vigentes y pasa el lote a `pedido`.
 - **`recibir_lote(p_lote_id, p_fecha, p_unidad_ids)`** — marca el lote recibido y pasa a `disponible` solo las piezas confirmadas. Sin lista, se da por recibido todo.
-- **`registrar_venta(p_unidad_ids, p_metodo_pago, p_canal, p_cliente_nombre, p_cliente_telefono, p_notas)`** — venta completa (encabezado, items y cambio de estado). Bloquea las filas antes de cobrar para que dos ventas simultáneas no vendan la misma pieza.
+- **`registrar_venta(p_unidad_ids, p_metodo_pago, p_canal, p_cliente_nombre, p_cliente_telefono, p_notas, p_cupon_codigo)`** — venta completa (encabezado, items al precio con oferta, cupón validado y contado, y cambio de estado). Bloquea las filas antes de cobrar para que dos ventas simultáneas no vendan la misma pieza, y bloquea el cupón para que dos cobros al mismo tiempo no se pasen del límite de usos.
+- **`precio_efectivo(precio, tipo, valor, hasta)`** — el precio que se cobra hoy por un modelo. Es la única definición: la usan la vista pública, la venta y el panel. Hay una copia en TypeScript (`packages/db/src/descuentos.ts`) para pintar el resultado sin ir a la red; si una cambia, la otra también.
 
 ### Automatización
 
@@ -148,7 +168,7 @@ pg_cron corre cada 15 minutos y libera automáticamente las unidades cuyo aparta
 
 ### Seguridad (RLS)
 
-- RLS activo en las 9 tablas.
+- RLS activo en las 10 tablas.
 - Además de RLS hay permisos por columna: el rol `anon` **no** puede leer `modelos.link_yupoo` (revela al proveedor) ni `unidades.folio`, `costo_unitario_mxn` o los datos del apartado. La vista `catalogo_publico` es `security_invoker`, así que depende de esos permisos y no los rodea.
 - El público (`anon`) solo puede: leer `catalogo_publico`, leer columnas seguras de `modelos`/`unidades` (sin costos ni datos de apartado) filtradas por `activo`/`disponible`, y ejecutar `apartar_unidad()`.
 - Cualquier usuario autenticado (el admin) tiene acceso completo a todo, vía políticas `admin_full_access`. El usuario admin se crea manualmente en Authentication → Users del dashboard de Supabase.

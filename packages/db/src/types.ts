@@ -85,6 +85,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cupones: {
+        Row: {
+          activo: boolean
+          codigo: string
+          creado_en: string
+          minimo_mxn: number
+          nota: string | null
+          tipo: Database['public']['Enums']['tipo_descuento']
+          usos: number
+          usos_maximos: number | null
+          valor: number
+          vence: string | null
+        }
+        Insert: {
+          activo?: boolean
+          codigo: string
+          creado_en?: string
+          minimo_mxn?: number
+          nota?: string | null
+          tipo: Database['public']['Enums']['tipo_descuento']
+          usos?: number
+          usos_maximos?: number | null
+          valor: number
+          vence?: string | null
+        }
+        Update: {
+          activo?: boolean
+          codigo?: string
+          creado_en?: string
+          minimo_mxn?: number
+          nota?: string | null
+          tipo?: Database['public']['Enums']['tipo_descuento']
+          usos?: number
+          usos_maximos?: number | null
+          valor?: number
+          vence?: string | null
+        }
+        Relationships: []
+      }
       precios_proveedor: {
         Row: {
           actualizado_en: string
@@ -200,6 +239,10 @@ export type Database = {
           id: string
           link_yupoo: string
           nombre: string
+          oferta_hasta: string | null
+          oferta_nota: string | null
+          oferta_tipo: Database['public']['Enums']['tipo_descuento'] | null
+          oferta_valor: number | null
           precio_venta_mxn: number
         }
         Insert: {
@@ -214,6 +257,10 @@ export type Database = {
           id?: string
           link_yupoo: string
           nombre: string
+          oferta_hasta?: string | null
+          oferta_nota?: string | null
+          oferta_tipo?: Database['public']['Enums']['tipo_descuento'] | null
+          oferta_valor?: number | null
           precio_venta_mxn: number
         }
         Update: {
@@ -228,6 +275,10 @@ export type Database = {
           id?: string
           link_yupoo?: string
           nombre?: string
+          oferta_hasta?: string | null
+          oferta_nota?: string | null
+          oferta_tipo?: Database['public']['Enums']['tipo_descuento'] | null
+          oferta_valor?: number | null
           precio_venta_mxn?: number
         }
         Relationships: []
@@ -354,8 +405,11 @@ export type Database = {
           cliente_telefono: string | null
           fecha: string
           id: string
+          cupon_codigo: string | null
+          descuento_mxn: number
           metodo_pago: Database['public']['Enums']['metodo_pago']
           notas: string | null
+          subtotal_mxn: number | null
           total_mxn: number
         }
         Insert: {
@@ -364,8 +418,11 @@ export type Database = {
           cliente_telefono?: string | null
           fecha?: string
           id?: string
+          cupon_codigo?: string | null
+          descuento_mxn?: number
           metodo_pago: Database['public']['Enums']['metodo_pago']
           notas?: string | null
+          subtotal_mxn?: number | null
           total_mxn: number
         }
         Update: {
@@ -374,8 +431,11 @@ export type Database = {
           cliente_telefono?: string | null
           fecha?: string
           id?: string
+          cupon_codigo?: string | null
+          descuento_mxn?: number
           metodo_pago?: Database['public']['Enums']['metodo_pago']
           notas?: string | null
+          subtotal_mxn?: number | null
           total_mxn?: number
         }
         Relationships: []
@@ -392,6 +452,7 @@ export type Database = {
           foto_url: string | null
           modelo_id: string | null
           nombre: string | null
+          precio_efectivo_mxn: number | null
           precio_venta_mxn: number | null
           stock_disponible: number | null
           tallas_disponibles: string[] | null
@@ -465,6 +526,7 @@ export type Database = {
           p_cliente_nombre: string | null
           p_cliente_telefono: string | null
           p_metodo_pago: Database['public']['Enums']['metodo_pago']
+          p_cupon_codigo?: string | null
           p_notas: string | null
           p_unidad_ids: string[]
         }
@@ -483,6 +545,7 @@ export type Database = {
         | 'apartada'
         | 'vendida'
       metodo_pago: 'efectivo' | 'spei' | 'tarjeta' | 'otro'
+      tipo_descuento: 'porcentaje' | 'monto'
     }
     CompositeTypes: {
       [_ in never]: never

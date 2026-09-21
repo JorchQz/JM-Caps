@@ -51,11 +51,16 @@ export function Inventario() {
         titulo="Inventario"
         descripcion="Modelos dados de alta y las piezas físicas de cada uno. El catálogo público solo muestra los que tienen disponibles mayor a cero."
         acciones={
-          <Link to="/productos">
-            <button type="button" className="principal">
-              Registrar productos
-            </button>
-          </Link>
+          <>
+            <Link to="/precios">
+              <button type="button">Precios y ofertas</button>
+            </Link>
+            <Link to="/productos">
+              <button type="button" className="principal">
+                Registrar productos
+              </button>
+            </Link>
+          </>
         }
       />
 
