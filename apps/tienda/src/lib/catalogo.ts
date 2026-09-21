@@ -1,4 +1,9 @@
-import { crearCliente, type Categoria, type Tables } from '@jm-caps/db'
+import {
+  crearCliente,
+  telefonoWhatsApp,
+  type Categoria,
+  type Tables,
+} from '@jm-caps/db'
 
 export const supabase = crearCliente({
   url: import.meta.env.VITE_SUPABASE_URL,
@@ -77,10 +82,12 @@ export function precioEnPesos(valor: number | null): string {
   return '$' + new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 }).format(valor)
 }
 
-/** Número de la tienda en formato internacional, para los enlaces a WhatsApp. */
+/**
+ * Número de la tienda en formato internacional. Acepta el valor de entorno en
+ * cualquiera de las formas usuales: diez dígitos, con 52, o con el 521 viejo.
+ */
 export function whatsappTienda(): string {
-  const digitos = (import.meta.env.VITE_WHATSAPP ?? '').replace(/\D/g, '')
-  return digitos.length === 10 ? `52${digitos}` : digitos
+  return telefonoWhatsApp(import.meta.env.VITE_WHATSAPP ?? '')
 }
 
 export function enlaceWhatsApp(mensaje: string): string {

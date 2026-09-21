@@ -54,5 +54,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Permite abrirlo desde el celular por Tailscale. Vite rechaza por
+    // defecto los nombres de host que no conoce, como los de la red privada.
+    allowedHosts: ['.ts.net'],
   },
 })
