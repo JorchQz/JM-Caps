@@ -186,6 +186,14 @@ a {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
+/* Dentro de una rejilla o de una fila el espacio lo pone el gap. El margen
+   de arriba, que es para tarjetas apiladas, bajaba 16px todas menos la
+   primera y dejaba el renglon disparejo. */
+.rejilla > .tarjeta + .tarjeta,
+.fila > .tarjeta + .tarjeta {
+  margin-top: 0;
+}
+
 .fila {
   display: flex;
   gap: 10px;
