@@ -7,13 +7,11 @@ import {
   formatearMXN,
   ofertaVigente,
   precioEfectivo,
-  revisarCupon,
   telefonoWhatsApp,
   type CanalVenta,
   type MetodoPago,
 } from '@jm-caps/db'
 import {
-  cargarCupones,
   llaves,
   registrarVenta,
   unidadesVendibles,
@@ -53,7 +51,6 @@ export function RegistrarVenta() {
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
   const [notas, setNotas] = useState('')
-  const [cupon, setCupon] = useState('')
   const [ultimaVenta, setUltimaVenta] = useState<{
     total: number
     piezas: number
@@ -108,26 +105,11 @@ export function RegistrarVenta() {
       .slice(0, 12)
   }, [busqueda, piezas, enCarrito])
 
-  // Los cupones se validan tambien en la base al cobrar. Se cargan aqui para
-  // poder avisar al teclear el codigo y no descubrir que no servia con el
-  // cliente enfrente.
-  const cupones = useQuery({ queryKey: llaves.cupones, queryFn: cargarCupones })
-
-  const subtotal = carrito.reduce(
+  // Se cobra el precio con la oferta ya aplicada, igual que la base.
+  const total = carrito.reduce(
     (suma, unidad) => suma + precioEfectivo(unidad.modelo.precio_venta_mxn, unidad.modelo),
     0,
   )
-
-  const codigoCupon = cupon.trim().toUpperCase()
-  const revision = codigoCupon
-    ? revisarCupon(
-        (cupones.data ?? []).find((fila) => fila.codigo === codigoCupon),
-        subtotal,
-      )
-    : null
-
-  const descuento = revision?.valido ? revision.descuento : 0
-  const total = subtotal - descuento
 
   function agregar(unidad: UnidadConModelo) {
     setFoliosCarrito((previo) =>
@@ -166,7 +148,6 @@ export function RegistrarVenta() {
         cliente_nombre: nombre.trim() || null,
         cliente_telefono: telefono.trim() || null,
         notas: notas.trim() || null,
-        cupon: revision?.valido ? codigoCupon : null,
       }
 
       // Sin señal la venta no se pierde: se guarda en el dispositivo y sube
@@ -190,7 +171,6 @@ export function RegistrarVenta() {
       setNombre('')
       setTelefono('')
       setNotas('')
-      setCupon('')
       refrescarCola()
 
       if (!resultado.pendiente) {
@@ -198,7 +178,6 @@ export function RegistrarVenta() {
         void clienteQuery.invalidateQueries({ queryKey: llaves.inventario })
         void clienteQuery.invalidateQueries({ queryKey: llaves.apartados })
         void clienteQuery.invalidateQueries({ queryKey: llaves.ventas })
-        void clienteQuery.invalidateQueries({ queryKey: llaves.cupones })
       }
     },
   })
@@ -373,22 +352,6 @@ export function RegistrarVenta() {
                     </td>
                   </tr>
                 ))}
-                {descuento > 0 ? (
-                  <>
-                    <tr>
-                      <td className="principal">Subtotal</td>
-                      <td className="numero">{formatearMXN(subtotal)}</td>
-                      <td />
-                    </tr>
-                    <tr>
-                      <td className="principal">
-                        Cupon <span className="mono">{codigoCupon}</span>
-                      </td>
-                      <td className="numero">-{formatearMXN(descuento)}</td>
-                      <td />
-                    </tr>
-                  </>
-                ) : null}
                 <tr>
                   <td className="principal">
                     <strong>Total</strong>
@@ -463,26 +426,6 @@ export function RegistrarVenta() {
               />
             </Campo>
           </div>
-
-          <Campo
-            etiqueta="Cupon"
-            ayuda="Opcional. El codigo que le pasaste al cliente por WhatsApp."
-          >
-            <input
-              className="mono"
-              value={cupon}
-              onChange={(evento) => setCupon(evento.target.value.toUpperCase())}
-              placeholder="COLOTLAN10"
-            />
-          </Campo>
-
-          {revision && !revision.valido ? <Aviso>{revision.motivo}</Aviso> : null}
-          {revision?.valido ? (
-            <Aviso tipo="exito">
-              Cupon aplicado: {formatearMXN(revision.descuento)} menos.
-              {hayRed ? '' : ' Sin senal se guarda con la venta y la base lo revisa al subir.'}
-            </Aviso>
-          ) : null}
 
           <Campo etiqueta="Notas">
             <textarea rows={2} value={notas} onChange={(evento) => setNotas(evento.target.value)} />

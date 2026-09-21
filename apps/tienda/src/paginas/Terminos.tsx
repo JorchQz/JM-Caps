@@ -63,11 +63,6 @@ export function Terminos() {
         entregamos a ese precio aunque la promoción termine antes de vernos.
       </p>
       <p>
-        Si te dimos un código de descuento, se aplica sobre el total al momento de pagar y se
-        suma a cualquier rebaja que ya tenga la gorra. Cada código trae sus condiciones —hasta
-        cuándo sirve, cuántas veces y si pide una compra mínima— y te las decimos al dártelo.
-      </p>
-      <p>
         <strong>No hay pago en línea.</strong> Pagas al recibir la gorra, en efectivo,
         transferencia o tarjeta con terminal. No pedimos datos bancarios por WhatsApp ni por esta
         página; si alguien te los pide a nombre nuestro, no es nuestro.

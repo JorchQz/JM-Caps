@@ -85,45 +85,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cupones: {
-        Row: {
-          activo: boolean
-          codigo: string
-          creado_en: string
-          minimo_mxn: number
-          nota: string | null
-          tipo: Database['public']['Enums']['tipo_descuento']
-          usos: number
-          usos_maximos: number | null
-          valor: number
-          vence: string | null
-        }
-        Insert: {
-          activo?: boolean
-          codigo: string
-          creado_en?: string
-          minimo_mxn?: number
-          nota?: string | null
-          tipo: Database['public']['Enums']['tipo_descuento']
-          usos?: number
-          usos_maximos?: number | null
-          valor: number
-          vence?: string | null
-        }
-        Update: {
-          activo?: boolean
-          codigo?: string
-          creado_en?: string
-          minimo_mxn?: number
-          nota?: string | null
-          tipo?: Database['public']['Enums']['tipo_descuento']
-          usos?: number
-          usos_maximos?: number | null
-          valor?: number
-          vence?: string | null
-        }
-        Relationships: []
-      }
       precios_proveedor: {
         Row: {
           actualizado_en: string
@@ -405,11 +366,8 @@ export type Database = {
           cliente_telefono: string | null
           fecha: string
           id: string
-          cupon_codigo: string | null
-          descuento_mxn: number
           metodo_pago: Database['public']['Enums']['metodo_pago']
           notas: string | null
-          subtotal_mxn: number | null
           total_mxn: number
         }
         Insert: {
@@ -418,11 +376,8 @@ export type Database = {
           cliente_telefono?: string | null
           fecha?: string
           id?: string
-          cupon_codigo?: string | null
-          descuento_mxn?: number
           metodo_pago: Database['public']['Enums']['metodo_pago']
           notas?: string | null
-          subtotal_mxn?: number | null
           total_mxn: number
         }
         Update: {
@@ -431,11 +386,8 @@ export type Database = {
           cliente_telefono?: string | null
           fecha?: string
           id?: string
-          cupon_codigo?: string | null
-          descuento_mxn?: number
           metodo_pago?: Database['public']['Enums']['metodo_pago']
           notas?: string | null
-          subtotal_mxn?: number | null
           total_mxn?: number
         }
         Relationships: []
@@ -526,7 +478,6 @@ export type Database = {
           p_cliente_nombre: string | null
           p_cliente_telefono: string | null
           p_metodo_pago: Database['public']['Enums']['metodo_pago']
-          p_cupon_codigo?: string | null
           p_notas: string | null
           p_unidad_ids: string[]
         }

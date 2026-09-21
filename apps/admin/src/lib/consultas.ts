@@ -22,7 +22,6 @@ export const llaves = {
   configuracion: (clave: string) => ['configuracion', clave] as const,
   apartados: ['apartados'] as const,
   ventas: ['ventas'] as const,
-  cupones: ['cupones'] as const,
 }
 
 function fallar(mensaje: string, error: { message: string } | null): never {
@@ -629,8 +628,6 @@ export type DatosVenta = {
   cliente_nombre: string | null
   cliente_telefono: string | null
   notas: string | null
-  /** Codigo tal cual lo dicto el cliente. La base lo valida y lo cuenta. */
-  cupon: string | null
 }
 
 export async function registrarVenta(datos: DatosVenta): Promise<string> {
@@ -641,7 +638,6 @@ export async function registrarVenta(datos: DatosVenta): Promise<string> {
     p_cliente_nombre: datos.cliente_nombre,
     p_cliente_telefono: datos.cliente_telefono,
     p_notas: datos.notas,
-    p_cupon_codigo: datos.cupon,
   })
 
   if (error) fallar('No se pudo registrar la venta', error)
@@ -690,7 +686,7 @@ export async function subirFoto(archivo: File, carpeta: string): Promise<string>
 }
 
 // ---------------------------------------------------------------------------
-// Precios, ofertas y cupones
+// Precios y ofertas
 // ---------------------------------------------------------------------------
 
 export type CambioPrecio = { id: string; precio_venta_mxn: number }
@@ -757,51 +753,4 @@ export async function quitarOferta(modeloIds: string[]): Promise<number> {
 
   if (error) fallar('No se pudo quitar la oferta', error)
   return modeloIds.length
-}
-
-export type Cupon = Tables<'cupones'>
-
-export async function cargarCupones(): Promise<Cupon[]> {
-  const { data, error } = await supabase
-    .from('cupones')
-    .select('*')
-    .order('creado_en', { ascending: false })
-
-  if (error) fallar('No se pudieron cargar los cupones', error)
-  return data ?? []
-}
-
-export type DatosCupon = {
-  codigo: string
-  tipo: TipoDescuento
-  valor: number
-  minimo_mxn: number
-  usos_maximos: number | null
-  vence: string | null
-  nota: string | null
-}
-
-export async function crearCupon(datos: DatosCupon): Promise<Cupon> {
-  const { data, error } = await supabase
-    .from('cupones')
-    .insert({ ...datos, codigo: datos.codigo.trim().toUpperCase() })
-    .select()
-    .single()
-
-  if (error) fallar('No se pudo crear el cupón', error)
-  return data
-}
-
-/** El contador de usos no se toca desde aquí: lo lleva registrar_venta. */
-export async function actualizarCupon(
-  codigo: string,
-  cambios: Partial<Omit<Cupon, 'codigo' | 'usos' | 'creado_en'>>,
-): Promise<void> {
-  const { error } = await supabase.from('cupones').update(cambios).eq('codigo', codigo)
-  if (error) fallar('No se pudo actualizar el cupón', error)
-}
-
-export async function eliminarCupon(codigo: string): Promise<void> {
-  const { error } = await supabase.from('cupones').delete().eq('codigo', codigo)
-  if (error) fallar('No se pudo eliminar el cupón', error)
 }

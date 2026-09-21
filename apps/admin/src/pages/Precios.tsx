@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -13,16 +13,11 @@ import {
   type TipoDescuento,
 } from '@jm-caps/db'
 import {
-  actualizarCupon,
   aplicarOferta,
-  cargarCupones,
   cargarInventario,
-  crearCupon,
-  eliminarCupon,
   guardarPrecios,
   llaves,
   quitarOferta,
-  type Cupon,
   type FilaInventario,
 } from '../lib/consultas'
 import {
@@ -35,25 +30,21 @@ import {
 } from '../components/ui'
 
 /**
- * Precios, ofertas y cupones.
+ * Precios y ofertas.
  *
- * Tres cosas distintas que conviene no confundir:
+ * El **precio de lista** es lo que vale la gorra, y se edita aquí en masa en
+ * vez de entrar modelo por modelo.
  *
- * - El **precio de lista** es lo que vale la gorra. Se edita aquí en masa en
- *   vez de entrar modelo por modelo.
- * - Una **oferta** vive en el modelo y la ve el cliente en la tienda con el
- *   precio anterior tachado. Se guarda el descuento, no el precio resultante,
- *   así que si sube el precio de lista la oferta lo sigue.
- * - Un **cupón** se aplica al total de una venta. No sale en la tienda: como
- *   no hay pago en línea, el cliente no puede canjearlo solo. El código se da
- *   por WhatsApp y se captura al cobrar.
+ * Una **oferta** vive en el modelo y la ve el cliente en la tienda con el
+ * precio anterior tachado. Se guarda el descuento, no el precio resultante,
+ * así que si sube el precio de lista la oferta lo sigue.
  */
 export function Precios() {
   return (
     <>
       <EncabezadoPagina
         titulo="Precios y ofertas"
-        descripcion="Cambia precios de varios modelos a la vez, pon rebajas que el cliente ve en la tienda, y crea códigos de descuento para aplicar al cobrar."
+        descripcion="Cambia el precio de varios modelos a la vez y pon rebajas que el cliente ve en la tienda con el precio anterior tachado."
         acciones={
           <Link to="/">
             <button type="button">Volver a inventario</button>
@@ -62,7 +53,6 @@ export function Precios() {
       />
 
       <TablaPrecios />
-      <SeccionCupones />
     </>
   )
 }
@@ -488,253 +478,5 @@ function FormularioOferta({
         </p>
       </form>
     </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Cupones
-// ---------------------------------------------------------------------------
-
-function SeccionCupones() {
-  const clienteQuery = useQueryClient()
-  const cupones = useQuery({ queryKey: llaves.cupones, queryFn: cargarCupones })
-
-  function refrescar() {
-    void clienteQuery.invalidateQueries({ queryKey: llaves.cupones })
-  }
-
-  return (
-    <>
-      <NuevoCupon alCrear={refrescar} />
-
-      <div className="tarjeta">
-        <h2 style={{ marginBottom: 12 }}>Cupones</h2>
-
-        <MensajeError error={cupones.error} />
-
-        {cupones.isLoading ? (
-          <Cargando />
-        ) : (cupones.data ?? []).length === 0 ? (
-          <Vacio>Todavía no hay cupones.</Vacio>
-        ) : (
-          <div className="tabla-contenedor">
-            <table>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th className="numero">Descuento</th>
-                  <th className="numero">Compra mínima</th>
-                  <th className="numero">Usos</th>
-                  <th>Vence</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {(cupones.data ?? []).map((cupon) => (
-                  <FilaCupon key={cupon.codigo} cupon={cupon} alCambiar={refrescar} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </>
-  )
-}
-
-function NuevoCupon({ alCrear }: { alCrear: () => void }) {
-  const [codigo, setCodigo] = useState('')
-  const [tipo, setTipo] = useState<TipoDescuento>('porcentaje')
-  const [valor, setValor] = useState('')
-  const [minimo, setMinimo] = useState('')
-  const [usosMaximos, setUsosMaximos] = useState('')
-  const [vence, setVence] = useState('')
-  const [nota, setNota] = useState('')
-
-  const alta = useMutation({
-    mutationFn: () =>
-      crearCupon({
-        codigo: codigo.trim().toUpperCase(),
-        tipo,
-        valor: Number(valor),
-        minimo_mxn: minimo ? Number(minimo) : 0,
-        usos_maximos: usosMaximos ? Number(usosMaximos) : null,
-        vence: vence || null,
-        nota: nota.trim() || null,
-      }),
-    onSuccess: () => {
-      setCodigo('')
-      setValor('')
-      setMinimo('')
-      setUsosMaximos('')
-      setVence('')
-      setNota('')
-      alCrear()
-    },
-  })
-
-  function enviar(evento: FormEvent) {
-    evento.preventDefault()
-    alta.mutate()
-  }
-
-  const codigoLimpio = codigo.trim().toUpperCase()
-  const codigoValido = /^[A-Z0-9-]{3,24}$/.test(codigoLimpio)
-
-  return (
-    <div className="tarjeta">
-      <h2 style={{ marginBottom: 4 }}>Nuevo cupón</h2>
-      <p className="tenue" style={{ marginTop: 0, fontSize: '0.88rem' }}>
-        El código no aparece en la tienda: se lo pasas al cliente por WhatsApp y lo capturas al
-        cobrar. La base lleva la cuenta de los usos, así que no se puede pasar del límite.
-      </p>
-
-      <form onSubmit={enviar}>
-        <div className="rejilla">
-          <Campo etiqueta="Código" ayuda="Letras, números y guiones. De 3 a 24 caracteres.">
-            <input
-              className="mono"
-              value={codigo}
-              onChange={(evento) => setCodigo(evento.target.value.toUpperCase())}
-              placeholder="COLOTLAN10"
-              required
-            />
-          </Campo>
-
-          <Campo etiqueta="Tipo de descuento">
-            <select value={tipo} onChange={(evento) => setTipo(evento.target.value as TipoDescuento)}>
-              {Object.entries(TIPOS_DESCUENTO).map(([clave, texto]) => (
-                <option key={clave} value={clave}>
-                  {texto}
-                </option>
-              ))}
-            </select>
-          </Campo>
-
-          <Campo etiqueta={tipo === 'porcentaje' ? 'Porcentaje' : 'Pesos de descuento'}>
-            <input
-              type="number"
-              min="1"
-              max={tipo === 'porcentaje' ? 90 : undefined}
-              step="1"
-              value={valor}
-              onChange={(evento) => setValor(evento.target.value)}
-              required
-            />
-          </Campo>
-
-          <Campo etiqueta="Compra mínima" ayuda="Opcional. En pesos, sobre el total de la venta.">
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={minimo}
-              onChange={(evento) => setMinimo(evento.target.value)}
-            />
-          </Campo>
-
-          <Campo etiqueta="Usos máximos" ayuda="Opcional. Vacío es sin límite.">
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={usosMaximos}
-              onChange={(evento) => setUsosMaximos(evento.target.value)}
-            />
-          </Campo>
-
-          <Campo etiqueta="Vence el" ayuda="Opcional. Vale todo ese día.">
-            <input type="date" value={vence} onChange={(evento) => setVence(evento.target.value)} />
-          </Campo>
-        </div>
-
-        <Campo etiqueta="Nota interna" ayuda="Para acordarte de a quién o para qué lo diste.">
-          <input
-            value={nota}
-            onChange={(evento) => setNota(evento.target.value)}
-            placeholder="Promoción de apertura"
-          />
-        </Campo>
-
-        <MensajeError error={alta.error} />
-        {codigo.trim() && !codigoValido ? (
-          <Aviso>Ese código no sirve. Usa de 3 a 24 letras, números o guiones, sin espacios.</Aviso>
-        ) : null}
-        {alta.isSuccess ? <Aviso tipo="exito">Cupón creado.</Aviso> : null}
-
-        <button type="submit" className="principal" disabled={!codigoValido || alta.isPending}>
-          {alta.isPending ? 'Creando' : 'Crear cupón'}
-        </button>
-      </form>
-    </div>
-  )
-}
-
-function FilaCupon({ cupon, alCambiar }: { cupon: Cupon; alCambiar: () => void }) {
-  const cambiar = useMutation({
-    mutationFn: (activo: boolean) => actualizarCupon(cupon.codigo, { activo }),
-    onSuccess: alCambiar,
-  })
-
-  const borrar = useMutation({
-    mutationFn: () => eliminarCupon(cupon.codigo),
-    onSuccess: alCambiar,
-  })
-
-  const agotado = cupon.usos_maximos != null && cupon.usos >= cupon.usos_maximos
-  const vencido = cupon.vence != null && cupon.vence < new Date().toISOString().slice(0, 10)
-
-  return (
-    <tr>
-      <td className="principal">
-        <strong className="mono">{cupon.codigo}</strong>
-        <div className="tenue" style={{ fontSize: '0.83rem' }}>
-          {!cupon.activo
-            ? 'Desactivado'
-            : vencido
-              ? 'Vencido'
-              : agotado
-                ? 'Sin usos disponibles'
-                : 'Vigente'}
-          {cupon.nota ? ` · ${cupon.nota}` : ''}
-        </div>
-      </td>
-      <td className="numero" data-etiqueta="Descuento">
-        {etiquetaDescuento(cupon.tipo, cupon.valor)}
-      </td>
-      <td className="numero" data-etiqueta="Compra mínima">
-        {cupon.minimo_mxn > 0 ? formatearMXN(cupon.minimo_mxn) : '-'}
-      </td>
-      <td className="numero" data-etiqueta="Usos">
-        {cupon.usos}
-        {cupon.usos_maximos != null ? ` de ${cupon.usos_maximos}` : ''}
-      </td>
-      <td data-etiqueta="Vence">{cupon.vence ?? 'Sin fecha'}</td>
-      <td className="acciones">
-        <div className="fila" style={{ justifyContent: 'flex-end', gap: 4 }}>
-          <button
-            type="button"
-            className="discreto"
-            disabled={cambiar.isPending}
-            onClick={() => cambiar.mutate(!cupon.activo)}
-          >
-            {cupon.activo ? 'Desactivar' : 'Activar'}
-          </button>
-          <button
-            type="button"
-            className="discreto peligro"
-            disabled={borrar.isPending || cupon.usos > 0}
-            title={cupon.usos > 0 ? 'Ya se usó en una venta: desactívalo en vez de borrarlo.' : undefined}
-            onClick={() => {
-              if (confirm(`Eliminar el cupón ${cupon.codigo}. No se puede deshacer.`)) {
-                borrar.mutate()
-              }
-            }}
-          >
-            Eliminar
-          </button>
-        </div>
-      </td>
-    </tr>
   )
 }
