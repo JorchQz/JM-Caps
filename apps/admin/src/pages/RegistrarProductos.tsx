@@ -156,7 +156,7 @@ export function RegistrarProductos() {
               <tbody>
                 {pendientes.map((linea) => (
                   <tr key={linea.id}>
-                    <td>
+                    <td className="principal">
                       {linea.modelo ? (
                         <strong>{linea.modelo.nombre}</strong>
                       ) : (
@@ -166,11 +166,11 @@ export function RegistrarProductos() {
                         {linea.link_yupoo}
                       </div>
                     </td>
-                    <td>{linea.talla ?? 'Ajustable'}</td>
-                    <td className="numero">
+                    <td data-etiqueta="Talla">{linea.talla ?? 'Ajustable'}</td>
+                    <td className="numero" data-etiqueta="Faltan">
                       {linea.cantidad - linea.unidadesCreadas} de {linea.cantidad}
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td className="acciones">
                       <button type="button" onClick={() => capturarLinea(linea)}>
                         Capturar
                       </button>

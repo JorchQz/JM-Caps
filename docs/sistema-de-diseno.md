@@ -196,6 +196,30 @@ Los colores de estado tienen significado fijo: `--exito` para disponible,
 `--alerta` para apartado, `--error` para lo destructivo. Están calibrados para
 leerse sobre fondo claro, que es distinto de lo que pedía el fondo oscuro.
 
+### Tablas en el celular
+
+El panel se usa principalmente en un teléfono de unos 390 px de ancho, y varias
+tablas tienen siete, ocho o hasta trece columnas. Arrastrar de lado para leer un
+renglón hace imposible comparar, así que **por debajo de 720 px cada fila se
+convierte en una ficha** y cada dato lleva al lado la etiqueta que daba el
+encabezado.
+
+Eso obliga a marcar las celdas al escribir una tabla nueva:
+
+- `data-etiqueta="Precio"` en cada celda con un dato que necesite nombre.
+- `className="principal"` en la celda que identifica la fila. Va arriba y sin
+  etiqueta, porque se explica sola.
+- `className="acciones"` en la celda de botones, para que queden a la izquierda
+  y no perdidos a la derecha.
+- `className="principal foto"` en una miniatura, para que el nombre la acompañe
+  en lugar de quedar debajo.
+
+Una celda sin etiquetar se ve como un valor suelto sin contexto. Para
+encontrarlas, busca `<td>` sin ninguna de esas tres marcas en
+`apps/admin/src/pages`.
+
+### Componentes
+
 Componentes disponibles: `.tarjeta`, `.rejilla`, `.fila`, `.fila-separada`,
 `.campo`, `.insignia` (con modificadores por estado), `.aviso`,
 `.tabla-contenedor`, `.vacio`, `.tenue`, `.mono`, `.numero`.

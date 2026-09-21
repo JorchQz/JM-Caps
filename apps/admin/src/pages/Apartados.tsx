@@ -91,26 +91,26 @@ function FilaApartado({ apartado }: { apartado: Apartado }) {
 
   return (
     <tr>
-      <td>
+      <td className="principal">
         <strong>{apartado.apartado_nombre ?? 'Sin nombre'}</strong>
         <div className="tenue" style={{ fontSize: '0.83rem' }}>
           {apartado.apartado_telefono ?? 'Sin teléfono'}
         </div>
       </td>
-      <td>
+      <td data-etiqueta="Gorra">
         <Link to={`/modelo/${apartado.modelo.id}`}>{apartado.modelo.nombre}</Link>
         <div className="tenue" style={{ fontSize: '0.83rem' }}>
           <span className="mono">{apartado.modelo.codigo}</span> · {apartado.talla ?? 'Ajustable'}
         </div>
       </td>
-      <td>
+      <td data-etiqueta="Vence">
         <span className={`insignia ${vencido ? 'apartada' : 'acento'}`}>{restante}</span>
         <div className="tenue" style={{ fontSize: '0.8rem' }}>
           {formatearFecha(apartado.apartado_hasta)}
         </div>
       </td>
-      <td className="numero">{formatearMXN(apartado.modelo.precio_venta_mxn)}</td>
-      <td>
+      <td className="numero" data-etiqueta="Precio">{formatearMXN(apartado.modelo.precio_venta_mxn)}</td>
+      <td className="acciones">
         <div className="fila" style={{ justifyContent: 'flex-end', gap: 4 }}>
           {apartado.apartado_telefono ? (
             <a

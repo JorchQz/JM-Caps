@@ -570,3 +570,121 @@ tr:last-child td {
   width: auto;
   display: block;
 }
+
+/* ------------------------------------------------- tablas en el celular */
+
+/*
+  Una tabla de nueve columnas no cabe en un teléfono, y arrastrar de lado para
+  leer un renglón hace imposible comparar. En pantalla chica cada fila se
+  convierte en una ficha y cada dato lleva su etiqueta al lado, que es lo que
+  daba el encabezado de la tabla.
+
+  Las celdas marcadas como .principal son el nombre de la cosa: van arriba,
+  sin etiqueta, porque se explican solas.
+*/
+@media (max-width: 720px) {
+  .tabla-contenedor thead {
+    display: none;
+  }
+
+  .tabla-contenedor table,
+  .tabla-contenedor tbody,
+  .tabla-contenedor tr,
+  .tabla-contenedor td {
+    display: block;
+    width: 100%;
+  }
+
+  .tabla-contenedor tr {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .tabla-contenedor tr:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .tabla-contenedor td {
+    border: none;
+    padding: 3px 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    text-align: right;
+  }
+
+  .tabla-contenedor td[data-etiqueta]::before {
+    content: attr(data-etiqueta);
+    flex: 0 0 auto;
+    color: var(--texto-tenue);
+    font-size: 0.76rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: left;
+  }
+
+  .tabla-contenedor td.principal {
+    display: block;
+    text-align: left;
+    padding: 0 0 8px;
+  }
+
+  /* Las columnas de acciones y las casillas quedan alineadas a la izquierda,
+     no perdidas a la derecha con el resto de los valores. */
+  .tabla-contenedor td.acciones {
+    display: block;
+    text-align: left;
+    padding-top: 10px;
+  }
+
+  .tabla-contenedor td.acciones .fila {
+    justify-content: flex-start !important;
+  }
+
+  /* Una celda sin contenido no debe dejar un hueco en la ficha. */
+  .tabla-contenedor td:empty {
+    display: none;
+  }
+}
+
+/* En pantallas chicas el teclado del navegador hace zoom si el campo mide
+   menos de 16px. */
+@media (max-width: 720px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .marca-logo {
+    height: 24px;
+  }
+
+  .barra-lateral {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .navegacion a {
+    padding: 8px 10px;
+    font-size: 0.88rem;
+  }
+}
+
+/* La miniatura del inventario va al lado del nombre, no como bloque aparte. */
+@media (max-width: 720px) {
+  .tabla-contenedor td.principal.foto {
+    float: left;
+    width: auto;
+    padding: 0 10px 8px 0;
+  }
+
+  .tabla-contenedor tr::after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+}

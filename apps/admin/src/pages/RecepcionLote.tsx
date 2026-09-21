@@ -169,16 +169,16 @@ export function RecepcionLote() {
                   const llegaron = cantidadRecibida(grupo)
                   return (
                     <tr key={grupo.clave}>
-                      <td>
+                      <td className="principal">
                         <Link to={`/modelo/${grupo.modeloId}`}>{grupo.nombre}</Link>
                         <div className="tenue" style={{ fontSize: '0.83rem' }}>
                           <span className="mono">{grupo.codigo}</span>
                           {grupo.yaEnStock > 0 ? ` · ${grupo.yaEnStock} ya en stock` : ''}
                         </div>
                       </td>
-                      <td>{grupo.talla ?? 'Ajustable'}</td>
-                      <td className="numero">{esperadas}</td>
-                      <td className="numero">
+                      <td data-etiqueta="Talla">{grupo.talla ?? 'Ajustable'}</td>
+                      <td className="numero" data-etiqueta="Pedidas">{esperadas}</td>
+                      <td className="numero" data-etiqueta="Llegaron">
                         <input
                           type="number"
                           min="0"
@@ -195,8 +195,8 @@ export function RecepcionLote() {
                           }}
                         />
                       </td>
-                      <td className="numero">{esperadas - llegaron}</td>
-                      <td className="numero">{formatearMXN(grupo.precio)}</td>
+                      <td className="numero" data-etiqueta="Faltan">{esperadas - llegaron}</td>
+                      <td className="numero" data-etiqueta="Precio">{formatearMXN(grupo.precio)}</td>
                     </tr>
                   )
                 })}
@@ -261,14 +261,14 @@ function PiezasPendientes({ unidades, loteId }: { unidades: UnidadConModelo[]; l
           <tbody>
             {unidades.map((unidad) => (
               <tr key={unidad.id}>
-                <td>
+                <td className="principal">
                   {unidad.modelo.nombre}
                   <div className="tenue" style={{ fontSize: '0.83rem' }}>
                     <span className="mono">{unidad.modelo.codigo}</span> ·{' '}
                     {unidad.talla ?? 'Ajustable'}
                   </div>
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td className="acciones">
                   <button
                     type="button"
                     className="discreto peligro"

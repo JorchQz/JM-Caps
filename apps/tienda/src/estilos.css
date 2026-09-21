@@ -268,7 +268,17 @@ input {
   padding: 12px 16px 28px;
 }
 
-@media (min-width: 760px) {
+/* Tres escalones, no dos: entre tableta y escritorio cuatro columnas dejan
+   las fotos demasiado chicas. */
+@media (min-width: 620px) {
+  .rejilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 16px 20px 32px;
+  }
+}
+
+@media (min-width: 1000px) {
   .rejilla {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;

@@ -222,25 +222,25 @@ function FilaUnidad({
 
   return (
     <tr>
-      <td>
+      <td className="principal foto">
         <input type="checkbox" checked={seleccionada} onChange={alAlternar} />
       </td>
-      <td className="mono">
-        <strong>{unidad.folio}</strong>
+      <td className="mono principal">
+        <strong>Folio {unidad.folio}</strong>
       </td>
-      <td>{unidad.talla ?? 'Ajustable'}</td>
-      <td>
+      <td data-etiqueta="Talla">{unidad.talla ?? 'Ajustable'}</td>
+      <td data-etiqueta="Estado">
         <InsigniaEstado estado={unidad.estado} />
       </td>
-      <td className="tenue" style={{ fontSize: '0.84rem' }}>
+      <td className="tenue" data-etiqueta="Apartado" style={{ fontSize: '0.84rem' }}>
         {unidad.estado === 'apartada'
           ? `${unidad.apartado_nombre ?? 'Sin nombre'} · vence en ${tiempoRestante(unidad.apartado_hasta)}`
           : unidad.estado === 'vendida'
             ? formatearFecha(unidad.fecha_venta)
             : '-'}
       </td>
-      <td className="numero">{formatearMXN(unidad.costo_unitario_mxn)}</td>
-      <td>
+      <td className="numero" data-etiqueta="Costo">{formatearMXN(unidad.costo_unitario_mxn)}</td>
+      <td className="acciones">
         <div className="fila" style={{ justifyContent: 'flex-end', gap: 4 }}>
           {unidad.estado === 'apartada' ? (
             <button

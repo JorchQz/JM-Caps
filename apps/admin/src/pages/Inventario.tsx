@@ -143,14 +143,14 @@ function FilaModelo({ fila }: { fila: FilaInventario }) {
 
   return (
     <tr>
-      <td>
+      <td className="principal foto">
         {modelo.foto_url ? (
           <img className="miniatura" src={modelo.foto_url} alt="" loading="lazy" />
         ) : (
           <div className="miniatura" />
         )}
       </td>
-      <td>
+      <td className="principal">
         <Link to={`/modelo/${modelo.id}`} style={{ fontWeight: 600 }}>
           {modelo.nombre}
         </Link>
@@ -161,7 +161,7 @@ function FilaModelo({ fila }: { fila: FilaInventario }) {
           {modelo.activo ? '' : ' · inactivo'}
         </div>
       </td>
-      <td>
+      <td data-etiqueta="Tallas">
         {conStock.length === 0 ? (
           <span className="tenue">Agotado</span>
         ) : (
@@ -174,10 +174,10 @@ function FilaModelo({ fila }: { fila: FilaInventario }) {
           </div>
         )}
       </td>
-      <td className="numero">{formatearMXN(modelo.precio_venta_mxn)}</td>
-      <td className="numero">{fila.disponibles}</td>
-      <td className="numero">{fila.apartadas}</td>
-      <td className="numero">{fila.vendidas}</td>
+      <td className="numero" data-etiqueta="Precio">{formatearMXN(modelo.precio_venta_mxn)}</td>
+      <td className="numero" data-etiqueta="Disponibles">{fila.disponibles}</td>
+      <td className="numero" data-etiqueta="Apartadas">{fila.apartadas}</td>
+      <td className="numero" data-etiqueta="Vendidas">{fila.vendidas}</td>
     </tr>
   )
 }

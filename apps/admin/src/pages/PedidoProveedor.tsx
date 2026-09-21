@@ -560,10 +560,10 @@ function PreciosProveedor({ base }: { base: BaseEscalon }) {
             ) : (
               escalones.map((escalon) => (
                 <tr key={`${escalon.categoria}-${escalon.desde_piezas}`}>
-                  <td>
+                  <td className="principal">
                     <strong>{escalon.categoria}</strong>
                   </td>
-                  <td className="numero">{escalon.desde_piezas} pz</td>
+                  <td className="numero" data-etiqueta="Desde">{escalon.desde_piezas} pz</td>
                   <td className="numero">
                     <input
                       type="number"
@@ -583,7 +583,7 @@ function PreciosProveedor({ base }: { base: BaseEscalon }) {
                       }}
                     />
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td className="acciones">
                     <button
                       type="button"
                       className="discreto peligro"
@@ -681,7 +681,7 @@ function FilaLinea({
 
   return (
     <tr style={descartada ? { opacity: 0.55 } : undefined}>
-      <td>
+      <td className="principal">
         {linea.modelo ? (
           <>
             <strong>{linea.modelo.nombre}</strong>
@@ -704,7 +704,7 @@ function FilaLinea({
           </div>
         ) : null}
       </td>
-      <td>
+      <td data-etiqueta="Tipo">
         {editable ? (
           <select
             value={linea.categoria ?? ''}
@@ -724,8 +724,8 @@ function FilaLinea({
           (linea.categoria ?? '-')
         )}
       </td>
-      <td>{linea.talla ?? 'Ajustable'}</td>
-      <td className="numero">
+      <td data-etiqueta="Talla">{linea.talla ?? 'Ajustable'}</td>
+      <td className="numero" data-etiqueta="Piezas">
         {editable ? (
           <input
             type="number"
@@ -743,7 +743,7 @@ function FilaLinea({
           linea.cantidad
         )}
       </td>
-      <td className="numero">
+      <td className="numero" data-etiqueta="Costo">
         {costeo.precioUsd === null ? (
           <span className="insignia apartada">
             {linea.categoria === null ? 'Falta el tipo' : 'Sin precio'}
@@ -762,7 +762,7 @@ function FilaLinea({
           </>
         )}
       </td>
-      <td>
+      <td data-etiqueta="Estado">
         {editable ? (
           <select
             value={linea.estado}
@@ -785,7 +785,7 @@ function FilaLinea({
           </div>
         ) : null}
       </td>
-      <td style={{ textAlign: 'right' }}>
+      <td className="acciones">
         {editable ? (
           <button
             type="button"

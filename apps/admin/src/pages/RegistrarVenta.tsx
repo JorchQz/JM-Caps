@@ -278,7 +278,7 @@ export function RegistrarVenta() {
               <tbody>
                 {resultados.map((unidad) => (
                   <tr key={unidad.id}>
-                    <td>
+                    <td className="principal">
                       <strong>{unidad.modelo.nombre}</strong>
                       <div className="tenue" style={{ fontSize: '0.83rem' }}>
                         <span className="mono">{unidad.modelo.codigo}</span> ·{' '}
@@ -289,7 +289,7 @@ export function RegistrarVenta() {
                       </div>
                     </td>
                     <td className="numero">{formatearMXN(unidad.modelo.precio_venta_mxn)}</td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td className="acciones">
                       <button type="button" onClick={() => agregar(unidad)}>
                         Agregar
                       </button>
@@ -315,7 +315,7 @@ export function RegistrarVenta() {
               <tbody>
                 {carrito.map((unidad) => (
                   <tr key={unidad.id}>
-                    <td>
+                    <td className="principal">
                       <strong>{unidad.modelo.nombre}</strong>
                       <div className="tenue" style={{ fontSize: '0.83rem' }}>
                         <span className="mono">{unidad.folio}</span> ·{' '}
@@ -323,7 +323,7 @@ export function RegistrarVenta() {
                       </div>
                     </td>
                     <td className="numero">{formatearMXN(unidad.modelo.precio_venta_mxn)}</td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td className="acciones">
                       <button type="button" className="discreto" onClick={() => quitar(unidad.folio)}>
                         Quitar
                       </button>
@@ -331,7 +331,7 @@ export function RegistrarVenta() {
                   </tr>
                 ))}
                 <tr>
-                  <td>
+                  <td className="principal">
                     <strong>Total</strong>
                   </td>
                   <td className="numero">

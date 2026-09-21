@@ -54,8 +54,8 @@ export function Historial() {
               <tbody>
                 {(data ?? []).map((venta) => (
                   <tr key={venta.id}>
-                    <td>{formatearFecha(venta.fecha)}</td>
-                    <td>
+                    <td className="principal"><strong>{formatearFecha(venta.fecha)}</strong></td>
+                    <td data-etiqueta="Cliente">
                       {venta.cliente_nombre ?? 'Sin nombre'}
                       {venta.cliente_telefono ? (
                         <div className="tenue" style={{ fontSize: '0.83rem' }}>
@@ -63,10 +63,10 @@ export function Historial() {
                         </div>
                       ) : null}
                     </td>
-                    <td>{CANALES_VENTA[venta.canal]}</td>
-                    <td>{METODOS_PAGO[venta.metodo_pago]}</td>
-                    <td className="numero">{venta.items.length}</td>
-                    <td className="numero">{formatearMXN(venta.total_mxn)}</td>
+                    <td data-etiqueta="Canal">{CANALES_VENTA[venta.canal]}</td>
+                    <td data-etiqueta="Pago">{METODOS_PAGO[venta.metodo_pago]}</td>
+                    <td className="numero" data-etiqueta="Piezas">{venta.items.length}</td>
+                    <td className="numero" data-etiqueta="Total">{formatearMXN(venta.total_mxn)}</td>
                   </tr>
                 ))}
               </tbody>

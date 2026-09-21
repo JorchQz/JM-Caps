@@ -148,8 +148,8 @@ function FilaLote({
 
   return (
     <tr>
-      <td>
-        {lote.fecha_pedido}
+      <td className="principal">
+        <strong>Pedido del {lote.fecha_pedido}</strong>
         {lote.fecha_recepcion ? (
           <div className="tenue" style={{ fontSize: '0.8rem' }}>
             Recibido {lote.fecha_recepcion}
@@ -161,7 +161,7 @@ function FilaLote({
           </div>
         ) : null}
       </td>
-      <td>
+      <td data-etiqueta="Estado">
         {lote.estado === 'recibido' ? (
           <span className="insignia disponible">{ESTADOS_LOTE.recibido}</span>
         ) : lote.estado === 'borrador' ? (
@@ -177,12 +177,14 @@ function FilaLote({
           </select>
         )}
       </td>
-      <td className="numero">{lote.unidades}</td>
-      <td className="numero">{lote.total_usd ?? '-'}</td>
-      <td className="numero">{lote.tipo_cambio_dia ?? '-'}</td>
-      <td className="numero">{formatearMXN(lote.costo_envio_mxn)}</td>
-      <td className="numero">{costoEstimado === null ? '-' : formatearMXN(costoEstimado)}</td>
-      <td>
+      <td className="numero" data-etiqueta="Piezas">{lote.unidades}</td>
+      <td className="numero" data-etiqueta="Total USD">{lote.total_usd ?? '-'}</td>
+      <td className="numero" data-etiqueta="Tipo de cambio">{lote.tipo_cambio_dia ?? '-'}</td>
+      <td className="numero" data-etiqueta="Envío">{formatearMXN(lote.costo_envio_mxn)}</td>
+      <td className="numero" data-etiqueta="Costo por pieza">
+        {costoEstimado === null ? '-' : formatearMXN(costoEstimado)}
+      </td>
+      <td className="acciones">
         {lote.estado === 'borrador' ? (
           <Link to={`/lotes/${lote.id}/pedido`}>
             <button type="button" className="principal">
