@@ -16,12 +16,8 @@ export const NEGOCIO = {
   /** Quién responde legalmente por los datos personales. */
   responsable: 'Jorge Iván Martínez Quezada',
 
-  /**
-   * Domicilio para efectos legales. No tiene que ser un local abierto al
-   * público, pero sí un domicilio real donde se puedan recibir
-   * notificaciones. PENDIENTE.
-   */
-  domicilio: 'PENDIENTE: calle, número, colonia, Colotlán, Jalisco, C.P.',
+  /** Domicilio para efectos legales, donde se pueden recibir notificaciones. */
+  domicilio: 'Colollatzin 55, Colotlán, Jalisco, C.P. 46206',
 
   /** Correo donde el cliente puede ejercer sus derechos ARCO. */
   correo: 'jm.capsrm@gmail.com',
